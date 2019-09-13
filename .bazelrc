@@ -1,0 +1,17 @@
+
+build --genrule_strategy=standalone
+build --spawn_strategy=standalone
+build --define=grpc_no_ares=true
+build --cxxopt=-std=c++1z
+
+build --host_force_python=py2
+build --define=use_fast_cpp_protos=true
+build --define=allow_oversize_protos=true
+
+build --copt="-D_GLIBCXX_USE_CXX11_ABI=0 -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR"
+test --copt="-D_GLIBCXX_USE_CXX11_ABI=0 -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR"
+run --copt="-D_GLIBCXX_USE_CXX11_ABI=0 -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR"
+
+test --spawn_strategy=standalone
+run --spawn_strategy=standalone
+build --jobs 4
