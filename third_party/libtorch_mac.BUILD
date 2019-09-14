@@ -12,7 +12,7 @@ cc_library(
     "include/torch/csrc/api/include/",
   ],
   linkopts=[
-    "-Lexternal/pytorch/lib", 
+    "-Lexternal/libtorch_mac/lib", 
     "-ltorch",
     "-lc10",
   ],
