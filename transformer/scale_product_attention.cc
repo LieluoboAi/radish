@@ -47,7 +47,7 @@ std::vector<Tensor> ScaleProductAttentionImpl::forward(const Tensor& q,
                                                        const Tensor& mask) {
   Tensor attn = ::torch::bmm(q, k.transpose(1, 2));
   attn.div_(options.temperature_);
-  if (!mask.numel() == 0) {
+  if (mask.numel() != 0) {
     attn.masked_fill_(mask, -INFINITY);
   }
   attn = ::torch::softmax(attn, 2);
