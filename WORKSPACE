@@ -55,16 +55,6 @@ http_archive(
 )
 
 
-http_archive(
-    name = "snappy",
-    build_file = "//third_party:snappy.BUILD",
-    sha256 = "3dfa02e873ff51a11ee02b9ca391807f0c8ea0529a4924afa645fbf97163f9d4",
-    strip_prefix = "snappy-1.1.7",
-    urls = [
-        "https://mirror.bazel.build/github.com/google/snappy/archive/1.1.7.tar.gz",
-        "https://github.com/google/snappy/archive/1.1.7.tar.gz",
-    ],
-)
 
 http_archive(
     name = "boost",
@@ -280,3 +270,24 @@ bind(
     name = "grpc_lib_unsecure",
     actual = "@com_github_grpc_grpc//:grpc++_unsecure",
 )
+
+http_archive(
+    name = "com_github_lieluoboai_leveldb",
+    strip_prefix = "leveldb-3d51bafc1764d7115db5f83b4a838bc6e630449a",
+    sha256 = "2c8815db8f1b5031e62d530e13ef31242f85ebcc6c7b486d8897474df482786f",
+    urls = [
+        "https://github.com/cschuet/leveldb/archive/3d51bafc1764d7115db5f83b4a838bc6e630449a.tar.gz",
+    ],
+)
+
+load("@com_github_lieluoboai_leveldb//:bazel/repositories.bzl", "repositories")
+
+repositories()
+
+load("@com_github_lieluoboai_snappy//:bazel/repositories.bzl", "repositories")
+
+repositories()
+
+load("@com_github_lieluoboai_crc32c//:bazel/repositories.bzl", "repositories")
+
+repositories()
