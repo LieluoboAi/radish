@@ -28,8 +28,8 @@ PositionwiseFCOptions::PositionwiseFCOptions(int64_t d_in, int64_t d_hidden,
                                              double dropout)
     : d_in_(d_in), d_hidden_(d_hidden), dropout_(dropout) {}
 
-PositionwiseFCImpl::PositionwiseFCImpl(PositionwiseFCOptions options)
-    : options(options) {
+PositionwiseFCImpl::PositionwiseFCImpl(PositionwiseFCOptions options_)
+    : options(options_) {
   reset();
 }
 

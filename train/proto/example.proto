@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package knlp.train;
+option java_outer_classname = "TrainExample";
+option java_multiple_files = true;
+option java_package = "com.lieluobo.ai.knlp.train";
+
+message TrainExample{
+  message SeqInt32{
+    repeated int32 val=1;
+  }
+  message SeqInt64{
+    repeated int64 val=1;
+  }
+  message SeqFloat32{
+    repeated float val=1;
+  }
+  message SeqFloat64{
+    repeated double val=1;
+  }
+  map<string,int64> int64_feature=1;
+  map<string,string> string_feature=2;
+  map<string,bytes> bytes_feature=3;
+  map<string,SeqInt32> int32_features=4;
+  map<string,SeqInt64> int64_features=5;
+  map<string,SeqFloat32> float32_features=6;
+  map<string,SeqFloat64> float64_features=7;
+}

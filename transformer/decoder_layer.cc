@@ -33,8 +33,8 @@ DecoderLayerOptions::DecoderLayerOptions(int64_t d_model, int64_t d_inner,
       d_v_(d_v),
       dropout_(dropout) {}
 
-DecoderLayerImpl::DecoderLayerImpl(DecoderLayerOptions options)
-    : options(options) {
+DecoderLayerImpl::DecoderLayerImpl(DecoderLayerOptions options_)
+    : options(options_) {
   reset();
 }
 

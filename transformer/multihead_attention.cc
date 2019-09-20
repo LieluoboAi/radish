@@ -35,8 +35,8 @@ MultiheadAttentionOptions::MultiheadAttentionOptions(int64_t n_head,
       dropout_(dropout) {}
 
 MultiheadAttentionImpl::MultiheadAttentionImpl(
-    MultiheadAttentionOptions options)
-    : options(options) {
+    MultiheadAttentionOptions options_)
+    : options(options_) {
   reset();
 }
 

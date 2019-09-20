@@ -42,8 +42,8 @@ TransformerOptions::TransformerOptions(int64_t n_src_vocab, int64_t n_tgt_vocab,
       tgt_emb_prj_weight_sharing_(tgt_emb_prj_weight_sharing),
       emb_src_tgt_weight_sharing_(emb_src_tgt_weight_sharing) {}
 
-TransformerImpl::TransformerImpl(TransformerOptions options)
-    : options(options) {
+TransformerImpl::TransformerImpl(TransformerOptions options_)
+    : options(options_) {
   reset();
 }
 

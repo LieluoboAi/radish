@@ -71,12 +71,6 @@ http_archive(
 
 
 git_repository(
-    name = "glog",
-    tag = "v0.4.0",
-    remote = "https://github.com/google/glog.git",
-)
-
-git_repository(
     name = "sentencepiece",
     commit = "f577b13572544ae9eae2fff0e85949c4e05c5f0b",
     remote = "https://github.com/LieluoboAi/sentencepiece.git",
@@ -122,11 +116,11 @@ bind(
 http_archive(
     name = "com_google_absl",
     build_file = "//third_party:absl.BUILD",
-    sha256 = "7dd09690ae7ca4551de3111d4a86b75b23ec17445f273d3c42bdcdc1c7b02e4e",
-    strip_prefix = "abseil-cpp-48cd2c3f351ff188bc85684b84a91b6e6d17d896",
+    sha256 = "327a3883d24cf5d81954b8b8713867ecf2289092c7a39a9dc25a9947cf5b8b78",
+    strip_prefix = "abseil-cpp-aa844899c937bde5d2b24f276b59997e5b668bde",
     urls = [
-        "https://mirror.bazel.build/github.com/abseil/abseil-cpp/archive/48cd2c3f351ff188bc85684b84a91b6e6d17d896.tar.gz",
-        "https://github.com/abseil/abseil-cpp/archive/48cd2c3f351ff188bc85684b84a91b6e6d17d896.tar.gz",
+        "https://mirror.bazel.build/github.com/abseil/abseil-cpp/archive/aa844899c937bde5d2b24f276b59997e5b668bde.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/aa844899c937bde5d2b24f276b59997e5b668bde.tar.gz",
     ],
 )
 
@@ -276,7 +270,7 @@ http_archive(
     strip_prefix = "leveldb-3d51bafc1764d7115db5f83b4a838bc6e630449a",
     sha256 = "2c8815db8f1b5031e62d530e13ef31242f85ebcc6c7b486d8897474df482786f",
     urls = [
-        "https://github.com/cschuet/leveldb/archive/3d51bafc1764d7115db5f83b4a838bc6e630449a.tar.gz",
+        "https://github.com/lieluoboai/leveldb/archive/3d51bafc1764d7115db5f83b4a838bc6e630449a.tar.gz",
     ],
 )
 

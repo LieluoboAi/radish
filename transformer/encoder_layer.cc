@@ -33,8 +33,8 @@ EncoderLayerOptions::EncoderLayerOptions(int64_t d_model, int64_t d_inner,
       d_v_(d_v),
       dropout_(dropout) {}
 
-EncoderLayerImpl::EncoderLayerImpl(EncoderLayerOptions options)
-    : options(options) {
+EncoderLayerImpl::EncoderLayerImpl(EncoderLayerOptions options_)
+    : options(options_) {
   reset();
 }
 

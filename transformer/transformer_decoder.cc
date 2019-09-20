@@ -37,8 +37,8 @@ TransformerDecoderOptions::TransformerDecoderOptions(
       dropout_(dropout) {}
 
 TransformerDecoderImpl::TransformerDecoderImpl(
-    TransformerDecoderOptions options)
-    : options(options) {
+    TransformerDecoderOptions options_)
+    : options(options_) {
   reset();
 }
 

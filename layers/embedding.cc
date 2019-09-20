@@ -24,7 +24,7 @@ namespace knlp {
 EmbeddingOptions::EmbeddingOptions(int64_t count, int64_t dimension)
     : count_(count), dimension_(dimension) {}
 
-EmbeddingImpl::EmbeddingImpl(EmbeddingOptions options) : options(options) {
+EmbeddingImpl::EmbeddingImpl(EmbeddingOptions options_) : options(options_) {
   reset();
 }
 

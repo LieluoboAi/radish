@@ -37,8 +37,8 @@ TransformerEncoderOptions::TransformerEncoderOptions(
       dropout_(dropout) {}
 
 TransformerEncoderImpl::TransformerEncoderImpl(
-    TransformerEncoderOptions options)
-    : options(options) {
+    TransformerEncoderOptions options_)
+    : options(options_) {
   reset();
 }
 

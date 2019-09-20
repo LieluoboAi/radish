@@ -26,8 +26,8 @@ ScaleProductAttentionOptions::ScaleProductAttentionOptions(double temperature,
     : temperature_(temperature), att_dropout_(att_dropout) {}
 
 ScaleProductAttentionImpl::ScaleProductAttentionImpl(
-    ScaleProductAttentionOptions options)
-    : options(options) {
+    ScaleProductAttentionOptions options_)
+    : options(options_) {
   reset();
 }
 

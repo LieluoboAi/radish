@@ -35,6 +35,7 @@ void RAdam::step() {
     if (!p.grad().defined()) {
       continue;
     }
+    auto lr = options.learning_rate_;
     // maybe place at the end
     if (options.weight_decay_ > 0) {
       torch::NoGradGuard guard;
@@ -44,11 +45,13 @@ void RAdam::step() {
     auto& exp_average_sq = buffer_at(exp_average_sq_buffers, i);
 
     buffer_at(step_buffers, i) += 1;
+    if (buffer_at(step_buffers, i) < options.warmup_steps_) {
+      lr *= buffer_at(step_buffers, i) / (options.warmup_steps_ + 0.0001);
+    }
     const auto bias_correction1 =
         1 - std::pow(options.beta1_, buffer_at(step_buffers, i));
     const auto bias_correction2 =
         1 - std::pow(options.beta2_, buffer_at(step_buffers, i));
-
     exp_average.mul_(options.beta1_).add_(p.grad(), 1 - options.beta1_);
     exp_average_sq.mul_(options.beta2_)
         .addcmul_(p.grad(), p.grad(), 1 - options.beta2_);
@@ -61,11 +64,11 @@ void RAdam::step() {
           ((pt - 4) * (pt - 2) * p_inf_) / ((p_inf_ - 4) * (p_inf_ - 2) * pt);
       r = sqrt(r);
       torch::NoGradGuard guard;
-      const auto step_size = (options.learning_rate_ * r) / bias_correction1;
+      const auto step_size = (lr * r) / bias_correction1;
       p.addcdiv_(exp_average, sq_correct + options.eps_, -step_size);
     } else {
       torch::NoGradGuard guard;
-      const auto step_size = options.learning_rate_ / bias_correction1;
+      const auto step_size = lr / bias_correction1;
       p.add_(exp_average, -step_size);
     }
   }

@@ -24,7 +24,7 @@ LayerNormOptions::LayerNormOptions(torch::IntArrayRef shape, double eps,
                                    bool elementAffine)
     : shape_(shape), eps_(eps), element_affine_(elementAffine) {}
 
-LayerNormImpl::LayerNormImpl(LayerNormOptions options) : options(options) {
+LayerNormImpl::LayerNormImpl(LayerNormOptions options_) : options(options_) {
   reset();
 }
 
