@@ -78,8 +78,8 @@ int main() {
   int batch_size = 128;
   int iterations = 50;
   auto model = AlexNet(224);
-  knlp::optim::RAdam optim(model->parameters(),
-                           knlp::optim::RAdamOptions(1e-3));
+  radish::optim::RAdam optim(model->parameters(),
+                             radish::optim::RAdamOptions(1e-3));
 
   model->train();
   model->to(device);

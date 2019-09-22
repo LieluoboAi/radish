@@ -15,7 +15,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace knlp {
+namespace radish {
 using Tensor = ::torch::Tensor;
 /// Options for the `LayerNorm` module.
 struct TORCH_API LayerNormOptions {
@@ -54,4 +54,4 @@ class TORCH_API LayerNormImpl : public torch::nn::Cloneable<LayerNormImpl> {
 /// module storage semantics.
 TORCH_MODULE(LayerNorm);
 
-}  // namespace knlp
+}  // namespace radish

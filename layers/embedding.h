@@ -1,8 +1,8 @@
 /*
  * File: embedding.h
  * Project: transformer
- * Author: koth (Koth Chen)
- * -----
+ * @ Modified by: Your name
+ * @ Modified time: 2019-09-22 20:33:15
  * Last Modified: 2019-09-15 5:37:03
  * Modified By: koth (nobody@verycool.com)
  * -----
@@ -16,8 +16,8 @@
 #include <cstddef>
 #include <vector>
 
-namespace knlp {
-using Tensor=::torch::Tensor;
+namespace radish {
+using Tensor = ::torch::Tensor;
 /// Options for the `Embedding` module.
 struct TORCH_API EmbeddingOptions {
   EmbeddingOptions(int64_t count, int64_t dimension);
@@ -25,8 +25,8 @@ struct TORCH_API EmbeddingOptions {
   TORCH_ARG(int64_t, count);
   /// The size of each embedding vector (number of columns in the table).
   TORCH_ARG(int64_t, dimension);
-  // Init MAX 
-  TORCH_ARG(double, init_max_value)=0.2;
+  // Init MAX
+  TORCH_ARG(double, init_max_value) = 0.2;
 };
 
 /// Performs a lookup in a fixed size embedding table.
@@ -59,4 +59,4 @@ class TORCH_API EmbeddingImpl : public torch::nn::Cloneable<EmbeddingImpl> {
 /// module storage semantics.
 TORCH_MODULE(Embedding);
 
-} // namespace knlp
+}  // namespace radish

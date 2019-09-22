@@ -22,7 +22,7 @@
 
 #include "layers/layer_norm.h"
 
-namespace knlp {
+namespace radish {
 
 PositionwiseFCOptions::PositionwiseFCOptions(int64_t d_in, int64_t d_hidden,
                                              double dropout)
@@ -57,4 +57,4 @@ Tensor PositionwiseFCImpl::forward(const Tensor& input) {
   output = dropout.forward(output);
   return layernorm.forward(output.add_(residual));
 }
-}  // namespace knlp
+}  // namespace radish

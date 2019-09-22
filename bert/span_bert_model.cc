@@ -11,7 +11,7 @@
 #include "bert/span_bert_model.h"
 #include "glog/logging.h"
 
-namespace knlp {
+namespace radish {
 static Tensor batch_select(const Tensor& input, const Tensor& inds) {
   // input [B,N,D]
   // inds [B,S]  -> [B,S,D]
@@ -106,4 +106,4 @@ Tensor SpanBertModelImpl::forward(std::vector<Tensor> inputs) {
   return rets[0];
 }
 
-}  // namespace knlp
+}  // namespace radish

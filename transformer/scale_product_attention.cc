@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-namespace knlp {
+namespace radish {
 
 ScaleProductAttentionOptions::ScaleProductAttentionOptions(double temperature,
                                                            double att_dropout)
@@ -37,8 +37,9 @@ void ScaleProductAttentionImpl::reset() {
 }
 
 void ScaleProductAttentionImpl::pretty_print(std::ostream& stream) const {
-  stream << "transformer::ScaleProductAttention(dropout=" << options.att_dropout_
-         << ", temperature=" << options.temperature_ << ")";
+  stream << "transformer::ScaleProductAttention(dropout="
+         << options.att_dropout_ << ", temperature=" << options.temperature_
+         << ")";
 }
 
 std::vector<Tensor> ScaleProductAttentionImpl::forward(const Tensor& q,
@@ -55,4 +56,4 @@ std::vector<Tensor> ScaleProductAttentionImpl::forward(const Tensor& q,
   const auto output = torch::bmm(attn, v);
   return {output, attn};
 }
-}  // namespace knlp
+}  // namespace radish

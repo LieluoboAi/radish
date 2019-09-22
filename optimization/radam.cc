@@ -21,7 +21,7 @@
 #include <cmath>
 #include <functional>
 
-namespace knlp {
+namespace radish {
 namespace optim {
 
 using Tensor = ::torch::Tensor;
@@ -83,7 +83,7 @@ void RAdam::load(::torch::serialize::InputArchive& archive) {
 }
 
 }  // namespace optim
-}  // namespace knlp
+}  // namespace radish
 
 namespace torch {
 namespace optim {

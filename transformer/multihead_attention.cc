@@ -22,7 +22,7 @@
 
 #include "layers/layer_norm.h"
 
-namespace knlp {
+namespace radish {
 
 MultiheadAttentionOptions::MultiheadAttentionOptions(int64_t n_head,
                                                      int64_t d_model,
@@ -48,7 +48,7 @@ void MultiheadAttentionImpl::reset() {
   w_vs = torch::nn::Linear(options.d_model_, options.n_head_ * options.d_v_);
   register_module("w_vs", w_vs);
   attention =
-      knlp::ScaleProductAttention(std::sqrt(options.d_k_), options.dropout_);
+      radish::ScaleProductAttention(std::sqrt(options.d_k_), options.dropout_);
   register_module("attention", attention);
   fc = torch::nn::Linear(options.n_head_ * options.d_v_, options.d_model_);
   register_module("fc", fc);
@@ -118,4 +118,4 @@ std::vector<Tensor> MultiheadAttentionImpl::forward(const Tensor& q,
 
   return {output, attn};
 }
-}  // namespace knlp
+}  // namespace radish

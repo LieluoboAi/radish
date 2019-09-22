@@ -15,8 +15,7 @@
 #include <memory>
 #include <tuple>
 
-
-namespace knlp {
+namespace radish {
 namespace train {
 using Tensor = torch::Tensor;
 class TORCH_API LlbModel : public ::torch::nn::Module {
@@ -28,14 +27,15 @@ class TORCH_API LlbModel : public ::torch::nn::Module {
    * 有监督时有target，无监督时target没有设置
    * logits  ->  模型输出
    * target    -> 标注标签
-   * return   first tensor for loss, second for eval 
-   *            
+   * return   first tensor for loss, second for eval
+   *
    **/
-  virtual std::tuple<Tensor,Tensor> CalcLoss(const std::vector<Tensor>& examples, const Tensor& logits, const Tensor& target = {}) = 0;
-
+  virtual std::tuple<Tensor, Tensor> CalcLoss(
+      const std::vector<Tensor>& examples, const Tensor& logits,
+      const Tensor& target = {}) = 0;
 
   virtual Tensor forward(std::vector<Tensor> inputs) = 0;
 };
 
 }  // namespace train
-}  // namespace knlp
+}  // namespace radish

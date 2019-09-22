@@ -19,7 +19,7 @@
 
 #include "optimization/radam.h"
 
-namespace knlp {
+namespace radish {
 
 namespace train {
 using Tensor = torch::Tensor;
@@ -48,9 +48,9 @@ class LlbTrainer {
       testDatas.push_back(ex.features);
       testTargets.push_back(ex.target);
     }
-    knlp::optim::RAdam radam(
+    radish::optim::RAdam radam(
         model->parameters(),
-        knlp::optim::RAdamOptions(learningRate).warmup_steps(warmSteps));
+        radish::optim::RAdamOptions(learningRate).warmup_steps(warmSteps));
     int64_t steps = 0;
     // first eval loss on test set
     auto [loss_v, eval_v] =
@@ -147,4 +147,4 @@ class LlbTrainer {
   }
 };
 }  // namespace train
-}  // namespace knlp
+}  // namespace radish

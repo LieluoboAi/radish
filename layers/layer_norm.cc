@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-namespace knlp {
+namespace radish {
 
 LayerNormOptions::LayerNormOptions(torch::IntArrayRef shape, double eps,
                                    bool elementAffine)
@@ -46,4 +46,4 @@ Tensor LayerNormImpl::forward(const Tensor& input) {
     return torch::layer_norm(input, options.shape_, {}, {}, options.eps_);
   }
 }
-}  // namespace knlp
+}  // namespace radish

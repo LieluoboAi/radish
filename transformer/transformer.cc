@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-namespace knlp {
+namespace radish {
 
 TransformerOptions::TransformerOptions(int64_t n_src_vocab, int64_t n_tgt_vocab,
                                        int64_t len_max_seq, int64_t d_word_vec,
@@ -112,4 +112,4 @@ Tensor TransformerImpl::forward(const Tensor& src_seq, const Tensor& src_pos,
   return seq_logit;
 }
 
-}  // namespace knlp
+}  // namespace radish

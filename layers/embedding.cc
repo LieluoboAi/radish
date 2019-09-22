@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-namespace knlp {
+namespace radish {
 
 EmbeddingOptions::EmbeddingOptions(int64_t count, int64_t dimension)
     : count_(count), dimension_(dimension) {}
@@ -43,4 +43,4 @@ void EmbeddingImpl::pretty_print(std::ostream& stream) const {
 Tensor EmbeddingImpl::forward(const Tensor& input) {
   return torch::embedding(weight, /*indices=*/input);
 }
-}  // namespace knlp
+}  // namespace radish

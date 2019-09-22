@@ -16,7 +16,7 @@
 
 #include "glog/logging.h"
 
-namespace knlp {
+namespace radish {
 // 200 -2
 static int kMaxLen = 198;
 static int kMaxLabel = 28;
@@ -60,4 +60,4 @@ bool SpanBertExampleParser::ParseOne(train::TrainExample& protoData,
 
   return true;
 }
-}  // namespace knlp
+}  // namespace radish

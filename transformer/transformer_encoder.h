@@ -20,16 +20,19 @@
 #include <cstddef>
 #include <vector>
 
-#include "transformer/encoder_layer.h"
 #include "layers/embedding.h"
 #include "layers/modulelist.h"
+#include "transformer/encoder_layer.h"
 
-namespace knlp {
+namespace radish {
 using Tensor = torch::Tensor;
 /// Options for the `TransformerEncoder` module.
 struct TORCH_API TransformerEncoderOptions {
-  TransformerEncoderOptions(int64_t n_src_vocab, int64_t len_max_seq, int64_t d_word_vec, int64_t n_layers, int64_t n_head,
-                      int64_t d_k, int64_t d_v, int64_t d_model, int64_t d_inner, double dropout = 0.1);
+  TransformerEncoderOptions(int64_t n_src_vocab, int64_t len_max_seq,
+                            int64_t d_word_vec, int64_t n_layers,
+                            int64_t n_head, int64_t d_k, int64_t d_v,
+                            int64_t d_model, int64_t d_inner,
+                            double dropout = 0.1);
   TORCH_ARG(int64_t, n_src_vocab);
   TORCH_ARG(int64_t, len_max_seq);
   TORCH_ARG(int64_t, d_word_vec);
@@ -40,30 +43,35 @@ struct TORCH_API TransformerEncoderOptions {
   TORCH_ARG(int64_t, d_model);
   TORCH_ARG(int64_t, d_inner);
   TORCH_ARG(double, dropout) = 0.1;
-  TORCH_ARG(int64_t, max_types)=32;
+  TORCH_ARG(int64_t, max_types) = 32;
 };
 
 class TORCH_API TransformerEncoderImpl
     : public ::torch::nn::Cloneable<TransformerEncoderImpl> {
  public:
-  TransformerEncoderImpl(int64_t n_src_vocab, int64_t len_max_seq, int64_t d_word_vec, int64_t n_layers, int64_t n_head,
-                      int64_t d_k, int64_t d_v, int64_t d_model, int64_t d_inner, double dropout = 0.1)
-      : TransformerEncoderImpl(
-            TransformerEncoderOptions(n_src_vocab, len_max_seq, d_word_vec, n_layers,n_head, d_k, d_v,d_model,d_inner,dropout)) {}
+  TransformerEncoderImpl(int64_t n_src_vocab, int64_t len_max_seq,
+                         int64_t d_word_vec, int64_t n_layers, int64_t n_head,
+                         int64_t d_k, int64_t d_v, int64_t d_model,
+                         int64_t d_inner, double dropout = 0.1)
+      : TransformerEncoderImpl(TransformerEncoderOptions(
+            n_src_vocab, len_max_seq, d_word_vec, n_layers, n_head, d_k, d_v,
+            d_model, d_inner, dropout)) {}
   explicit TransformerEncoderImpl(TransformerEncoderOptions options);
 
   void reset() override;
 
   void pretty_print(std::ostream& stream) const override;
 
-  std::vector<Tensor> forward(const Tensor& src_seq, const Tensor& src_pos, const Tensor& type_emb={}, bool return_attns=false);
+  std::vector<Tensor> forward(const Tensor& src_seq, const Tensor& src_pos,
+                              const Tensor& type_emb = {},
+                              bool return_attns = false);
 
   /// The options used to configure this module.
   TransformerEncoderOptions options;
-  knlp::Embedding src_word_emb=nullptr;
-  knlp::Embedding pos_emb=nullptr;
-  knlp::Embedding type_emb = nullptr;
-  torch::nn::ModuleList  encoder_stack={};
+  radish::Embedding src_word_emb = nullptr;
+  radish::Embedding pos_emb = nullptr;
+  radish::Embedding type_emb = nullptr;
+  torch::nn::ModuleList encoder_stack = {};
 };
 
 /// A `ModuleHolder` subclass for `TransformerEncoderImpl`.
@@ -72,4 +80,4 @@ class TORCH_API TransformerEncoderImpl
 /// PyTorch's module storage semantics.
 TORCH_MODULE(TransformerEncoder);
 
-}  // namespace knlp
+}  // namespace radish

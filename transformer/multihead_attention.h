@@ -23,7 +23,7 @@
 
 #include "transformer/scale_product_attention.h"
 
-namespace knlp {
+namespace radish {
 using Tensor = torch::Tensor;
 /// Options for the `MultiheadAttention` module.
 struct TORCH_API MultiheadAttentionOptions {
@@ -58,7 +58,7 @@ class TORCH_API MultiheadAttentionImpl
   torch::nn::Linear w_qs = nullptr;
   torch::nn::Linear w_ks = nullptr;
   torch::nn::Linear w_vs = nullptr;
-  knlp::ScaleProductAttention attention = nullptr;
+  radish::ScaleProductAttention attention = nullptr;
   torch::nn::AnyModule layernorm;
   torch::nn::Linear fc = nullptr;
   torch::nn::AnyModule dropout;
@@ -70,4 +70,4 @@ class TORCH_API MultiheadAttentionImpl
 /// PyTorch's module storage semantics.
 TORCH_MODULE(MultiheadAttention);
 
-}  // namespace knlp
+}  // namespace radish

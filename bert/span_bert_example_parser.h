@@ -18,9 +18,9 @@ namespace sentencepiece {
 class SentencePieceProcessor;
 }  // namespace sentencepiece
 
-namespace knlp {
+namespace radish {
 using Tensor = torch::Tensor;
-class SpanBertExampleParser : public knlp::data::ExampleParser {
+class SpanBertExampleParser : public radish::data::ExampleParser {
  public:
   virtual ~SpanBertExampleParser();
   bool Init(const Json::Value& config) override;
@@ -31,4 +31,4 @@ class SpanBertExampleParser : public knlp::data::ExampleParser {
   std::shared_ptr<sentencepiece::SentencePieceProcessor> spp_;
 };
 
-}  // namespace knlp
+}  // namespace radish

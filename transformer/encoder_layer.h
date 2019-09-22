@@ -22,7 +22,7 @@
 
 #include "transformer/multihead_attention.h"
 
-namespace knlp {
+namespace radish {
 using Tensor = torch::Tensor;
 /// Options for the `EncoderLayer` module.
 struct TORCH_API EncoderLayerOptions {
@@ -39,8 +39,8 @@ struct TORCH_API EncoderLayerOptions {
 class TORCH_API EncoderLayerImpl
     : public ::torch::nn::Cloneable<EncoderLayerImpl> {
  public:
-  EncoderLayerImpl(int64_t d_model, int64_t d_inner, int64_t n_head,int64_t d_k, int64_t d_v,
-                   double dropout = 0.1)
+  EncoderLayerImpl(int64_t d_model, int64_t d_inner, int64_t n_head,
+                   int64_t d_k, int64_t d_v, double dropout = 0.1)
       : EncoderLayerImpl(
             EncoderLayerOptions(d_model, d_inner, n_head, d_k, d_v, dropout)) {}
   explicit EncoderLayerImpl(EncoderLayerOptions options);
@@ -50,11 +50,13 @@ class TORCH_API EncoderLayerImpl
   /// Pretty prints the `Linear` module into the given `stream`.
   void pretty_print(std::ostream& stream) const override;
 
-  std::vector<Tensor> forward(const Tensor& enc_input, const Tensor& non_pad_mask={}, const Tensor& slf_attn_mask={});
+  std::vector<Tensor> forward(const Tensor& enc_input,
+                              const Tensor& non_pad_mask = {},
+                              const Tensor& slf_attn_mask = {});
 
   /// The options used to configure this module.
   EncoderLayerOptions options;
-  knlp::MultiheadAttention slf_attn=nullptr;
+  radish::MultiheadAttention slf_attn = nullptr;
   torch::nn::AnyModule pos_ffn;
 };
 
@@ -64,4 +66,4 @@ class TORCH_API EncoderLayerImpl
 /// PyTorch's module storage semantics.
 TORCH_MODULE(EncoderLayer);
 
-}  // namespace knlp
+}  // namespace radish

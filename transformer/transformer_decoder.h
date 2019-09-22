@@ -24,7 +24,7 @@
 #include "layers/modulelist.h"
 #include "transformer/decoder_layer.h"
 
-namespace knlp {
+namespace radish {
 using Tensor = torch::Tensor;
 /// Options for the `TransformerDecoder` module.
 struct TORCH_API TransformerDecoderOptions {
@@ -67,8 +67,8 @@ class TORCH_API TransformerDecoderImpl
 
   /// The options used to configure this module.
   TransformerDecoderOptions options;
-  knlp::Embedding tgt_word_emb = nullptr;
-  knlp::Embedding pos_emb = nullptr;
+  radish::Embedding tgt_word_emb = nullptr;
+  radish::Embedding pos_emb = nullptr;
   torch::nn::ModuleList decoder_stack = {};
 };
 
@@ -78,4 +78,4 @@ class TORCH_API TransformerDecoderImpl
 /// PyTorch's module storage semantics.
 TORCH_MODULE(TransformerDecoder);
 
-}  // namespace knlp
+}  // namespace radish

@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-namespace knlp {
+namespace radish {
 
 TransformerDecoderOptions::TransformerDecoderOptions(
     int64_t n_tgt_vocab, int64_t len_max_seq, int64_t d_word_vec,
@@ -44,14 +44,14 @@ TransformerDecoderImpl::TransformerDecoderImpl(
 
 void TransformerDecoderImpl::reset() {
   int64_t n_position = options.len_max_seq_ + 1;
-  tgt_word_emb = knlp::Embedding(options.n_tgt_vocab_, options.d_word_vec_);
+  tgt_word_emb = radish::Embedding(options.n_tgt_vocab_, options.d_word_vec_);
   register_module("tgt_word_emb", tgt_word_emb);
-  pos_emb = knlp::Embedding(n_position, options.d_word_vec_);
+  pos_emb = radish::Embedding(n_position, options.d_word_vec_);
   register_module("pos_emb", pos_emb);
   for (auto i = 0; i < options.n_layers_; i++) {
-    auto layer =
-        knlp::DecoderLayer(options.d_model_, options.d_inner_, options.n_head_,
-                           options.d_k_, options.d_v_, options.dropout_);
+    auto layer = radish::DecoderLayer(options.d_model_, options.d_inner_,
+                                      options.n_head_, options.d_k_,
+                                      options.d_v_, options.dropout_);
     register_module(std::string("decoder_layer_") + std::to_string(i + 1),
                     layer);
     decoder_stack->push_back(layer);
@@ -137,4 +137,4 @@ std::vector<Tensor> TransformerDecoderImpl::forward(const Tensor& tgt_seq,
     return {dec_output};
   }
 }
-}  // namespace knlp
+}  // namespace radish

@@ -22,7 +22,7 @@
 
 #include "transformer/multihead_attention.h"
 
-namespace knlp {
+namespace radish {
 using Tensor = torch::Tensor;
 /// Options for the `DecoderLayer` module.
 struct TORCH_API DecoderLayerOptions {
@@ -57,8 +57,8 @@ class TORCH_API DecoderLayerImpl
 
   /// The options used to configure this module.
   DecoderLayerOptions options;
-  knlp::MultiheadAttention slf_attn = nullptr;
-  knlp::MultiheadAttention decenc_attn = nullptr;
+  radish::MultiheadAttention slf_attn = nullptr;
+  radish::MultiheadAttention decenc_attn = nullptr;
   torch::nn::AnyModule pos_ffn;
 };
 
@@ -68,4 +68,4 @@ class TORCH_API DecoderLayerImpl
 /// PyTorch's module storage semantics.
 TORCH_MODULE(DecoderLayer);
 
-}  // namespace knlp
+}  // namespace radish

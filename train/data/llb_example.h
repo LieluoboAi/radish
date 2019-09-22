@@ -11,7 +11,7 @@
 #pragma once
 
 #include "torch/torch.h"
-namespace knlp {
+namespace radish {
 namespace data {
 using Tensor = torch::Tensor;
 class LlbExample {
@@ -22,4 +22,4 @@ class LlbExample {
 };
 
 }  // namespace data
-}  // namespace knlp
+}  // namespace radish

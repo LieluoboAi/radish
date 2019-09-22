@@ -35,11 +35,12 @@ ABSL_FLAG(int32_t, warmup_steps, 60000, "the warmup steps");
 
 int main(int argc, char* argv[]) {
   absl::ParseCommandLine(argc, argv);
-  knlp::SpanBertModel model = knlp::SpanBertModel(
+  radish::SpanBertModel model = radish::SpanBertModel(
       absl::GetFlag(FLAGS_n_vocab), absl::GetFlag(FLAGS_max_seq_len),
       absl::GetFlag(FLAGS_d_word_vec));
-  knlp::train::ProgressReporter reporter;
-  knlp::train::LlbTrainer<knlp::SpanBertExampleParser, knlp::SpanBertModel>
+  radish::train::ProgressReporter reporter;
+  radish::train::LlbTrainer<radish::SpanBertExampleParser,
+                            radish::SpanBertModel>
       trainner;
   std::string trainDataPath = absl::GetFlag(FLAGS_train_data_path);
   std::string testDataPath = absl::GetFlag(FLAGS_test_data_path);

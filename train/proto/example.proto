@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package knlp.train;
+package radish.train;
 option java_outer_classname = "TrainExample";
 option java_multiple_files = true;
-option java_package = "com.lieluobo.ai.knlp.train";
+option java_package = "com.lieluobo.ai.radish.train";
 
 message TrainExample{
   message SeqInt32{

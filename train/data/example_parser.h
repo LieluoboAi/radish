@@ -13,7 +13,7 @@
 #include "torch/torch.h"
 #include "train/data/llb_example.h"
 #include "train/proto/example.pb.h"
-namespace knlp {
+namespace radish {
 namespace data {
 using Tensor = torch::Tensor;
 class ExampleParser {
@@ -25,4 +25,4 @@ class ExampleParser {
 };
 }  // namespace data
 
-}  // namespace knlp
+}  // namespace radish

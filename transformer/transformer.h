@@ -23,7 +23,7 @@
 #include "transformer/transformer_decoder.h"
 #include "transformer/transformer_encoder.h"
 
-namespace knlp {
+namespace radish {
 using Tensor = torch::Tensor;
 /// Options for the `Transformer` module.
 struct TORCH_API TransformerOptions {
@@ -62,7 +62,7 @@ class TORCH_API TransformerImpl
   void pretty_print(std::ostream& stream) const override;
 
   Tensor forward(const Tensor& src_seq, const Tensor& src_pos,
-                              const Tensor& tgt_seq, const Tensor& tgt_pos);
+                 const Tensor& tgt_seq, const Tensor& tgt_pos);
 
   /// The options used to configure this module.
   TransformerOptions options;
@@ -78,4 +78,4 @@ class TORCH_API TransformerImpl
 /// PyTorch's module storage semantics.
 TORCH_MODULE(Transformer);
 
-}  // namespace knlp
+}  // namespace radish

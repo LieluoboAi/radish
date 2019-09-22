@@ -24,7 +24,7 @@
 #include "train/data/llb_example.h"
 #include "train/proto/example.pb.h"
 
-namespace knlp {
+namespace radish {
 namespace data {
 static std::string kTotalCountKey = "_TOTAL_COUNT_";
 static std::string kConfigMetaKey = "_CONF_METADATA_";
@@ -69,7 +69,7 @@ class LeveldbDataset
       VLOG(0) << "key not found:" << index;
       return ret;
     }
-    train::TrainExample exampleProto;
+    radish::train::TrainExample exampleProto;
     exampleProto.ParseFromString(rawData);
     CHECK(parser_->ParseOne(exampleProto, ret)) << "Parser example error";
     return ret;
@@ -97,4 +97,4 @@ class LeveldbDataset
 };
 
 }  // namespace data
-}  // namespace knlp
+}  // namespace radish

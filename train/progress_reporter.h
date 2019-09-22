@@ -16,7 +16,7 @@
 #include "absl/types/optional.h"
 #include "glog/logging.h"
 
-namespace knlp {
+namespace radish {
 namespace train {
 class ProgressReporter {
  public:
@@ -38,4 +38,4 @@ class ProgressReporter {
 };
 
 }  // namespace train
-}  // namespace knlp
+}  // namespace radish

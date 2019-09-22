@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace knlp {
+namespace radish {
 using Tensor = ::torch::Tensor;
 /// Options for the `ScaleProductAttention` module.
 struct TORCH_API PositionwiseFCOptions {
@@ -54,4 +54,4 @@ class TORCH_API PositionwiseFCImpl
 /// it provides, or the documentation for `ModuleHolder` to learn about
 /// PyTorch's module storage semantics.
 TORCH_MODULE(PositionwiseFC);
-}  // namespace knlp
+}  // namespace radish

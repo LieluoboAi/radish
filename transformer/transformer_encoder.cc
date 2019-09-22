@@ -21,7 +21,7 @@
 
 #include "glog/logging.h"
 
-namespace knlp {
+namespace radish {
 
 TransformerEncoderOptions::TransformerEncoderOptions(
     int64_t n_src_vocab, int64_t len_max_seq, int64_t d_word_vec,
@@ -59,16 +59,16 @@ static Tensor get_non_pad_mask(const Tensor& seq) {
 
 void TransformerEncoderImpl::reset() {
   int64_t n_position = options.len_max_seq_ + 1;
-  src_word_emb = knlp::Embedding(options.n_src_vocab_, options.d_word_vec_);
+  src_word_emb = radish::Embedding(options.n_src_vocab_, options.d_word_vec_);
   register_module("src_word_emb", src_word_emb);
-  pos_emb = knlp::Embedding(n_position, options.d_word_vec_);
+  pos_emb = radish::Embedding(n_position, options.d_word_vec_);
   register_module("pos_emb", pos_emb);
-  type_emb = knlp::Embedding(options.max_types_, options.d_word_vec_);
+  type_emb = radish::Embedding(options.max_types_, options.d_word_vec_);
   register_module("type_emb", type_emb);
   for (auto i = 0; i < options.n_layers_; i++) {
-    auto layer =
-        knlp::EncoderLayer(options.d_model_, options.d_inner_, options.n_head_,
-                           options.d_k_, options.d_v_, options.dropout_);
+    auto layer = radish::EncoderLayer(options.d_model_, options.d_inner_,
+                                      options.n_head_, options.d_k_,
+                                      options.d_v_, options.dropout_);
     register_module(std::string("encoder_layer_") + std::to_string(i + 1),
                     layer);
     encoder_stack->push_back(layer);
@@ -103,8 +103,8 @@ std::vector<Tensor> TransformerEncoderImpl::forward(const Tensor& src_seq,
   Tensor non_pad_mask = get_non_pad_mask(src_seq);
   // # -- Forward
   Tensor enc_output =
-    src_word_emb->forward(src_seq) + pos_emb->forward(src_pos);
-  if(types.dim()>0){
+      src_word_emb->forward(src_seq) + pos_emb->forward(src_pos);
+  if (types.dim() > 0) {
     CHECK_EQ(src_seq.sizes(), types.sizes());
     enc_output = enc_output + type_emb->forward(types);
   }
@@ -125,4 +125,4 @@ std::vector<Tensor> TransformerEncoderImpl::forward(const Tensor& src_seq,
   }
   return enc_slf_attn_list;
 }
-}  // namespace knlp
+}  // namespace radish

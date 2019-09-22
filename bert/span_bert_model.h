@@ -12,7 +12,7 @@
 
 #include "train/llb_model.h"
 #include "transformer/transformer_encoder.h"
-namespace knlp {
+namespace radish {
 using Tensor = torch::Tensor;
 
 /// Options for the `SpanBert` module.
@@ -54,4 +54,4 @@ class TORCH_API SpanBertModelImpl : public train::LlbModel {
 };
 
 TORCH_MODULE(SpanBertModel);
-}  // namespace knlp
+}  // namespace radish

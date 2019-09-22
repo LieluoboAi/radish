@@ -21,7 +21,7 @@
 
 #include "transformer/positionwise_fc.h"
 
-namespace knlp {
+namespace radish {
 
 EncoderLayerOptions::EncoderLayerOptions(int64_t d_model, int64_t d_inner,
                                          int64_t n_head, int64_t d_k,
@@ -40,11 +40,11 @@ EncoderLayerImpl::EncoderLayerImpl(EncoderLayerOptions options_)
 
 void EncoderLayerImpl::reset() {
   pos_ffn = register_module(
-      "pos_ffn", knlp::PositionwiseFC(options.d_model_, options.d_inner_,
-                                      options.dropout_));
+      "pos_ffn", radish::PositionwiseFC(options.d_model_, options.d_inner_,
+                                        options.dropout_));
   slf_attn =
-      knlp::MultiheadAttention(options.n_head_, options.d_model_, options.d_k_,
-                               options.d_v_, options.dropout_);
+      radish::MultiheadAttention(options.n_head_, options.d_model_,
+                                 options.d_k_, options.d_v_, options.dropout_);
   register_module("slf_attn", slf_attn);
 }
 
@@ -71,4 +71,4 @@ std::vector<Tensor> EncoderLayerImpl::forward(const Tensor& enc_input,
   }
   return {enc_output, enc_slf_attn};
 }
-}  // namespace knlp
+}  // namespace radish
