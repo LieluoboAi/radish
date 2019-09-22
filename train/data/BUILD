@@ -9,7 +9,19 @@ cc_library(
     ],
     deps = [
         "//third_party:pytorch",
+    ],
+)
+
+cc_library(
+    name = "example_parser",
+    srcs = [
+        "example_parser.h",
+    ],
+    deps = [
+        ":llb_example",
+        "//third_party:pytorch",
         "//train/proto:example_proto_cc",
+        "@jsoncpp//:jsoncpp",
     ],
 )
 

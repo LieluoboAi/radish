@@ -87,6 +87,7 @@ cc_library(
         "//layers:embedding",
         "//layers:modulelist",
         "//third_party:pytorch",
+        "@com_google_glog//:glog",
     ],
 )
 

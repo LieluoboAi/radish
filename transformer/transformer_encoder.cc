@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+#include "glog/logging.h"
+
 namespace knlp {
 
 TransformerEncoderOptions::TransformerEncoderOptions(
@@ -61,6 +63,8 @@ void TransformerEncoderImpl::reset() {
   register_module("src_word_emb", src_word_emb);
   pos_emb = knlp::Embedding(n_position, options.d_word_vec_);
   register_module("pos_emb", pos_emb);
+  type_emb = knlp::Embedding(options.max_types_, options.d_word_vec_);
+  register_module("type_emb", type_emb);
   for (auto i = 0; i < options.n_layers_; i++) {
     auto layer =
         knlp::EncoderLayer(options.d_model_, options.d_inner_, options.n_head_,
@@ -72,6 +76,7 @@ void TransformerEncoderImpl::reset() {
   torch::NoGradGuard guard;
   torch::nn::init::uniform_(src_word_emb->weight, -0.02, 0.02);
   torch::nn::init::uniform_(pos_emb->weight, -0.02, 0.02);
+  torch::nn::init::uniform_(type_emb->weight, -0.02, 0.02);
 }
 
 void TransformerEncoderImpl::pretty_print(std::ostream& stream) const {
@@ -81,19 +86,28 @@ void TransformerEncoderImpl::pretty_print(std::ostream& stream) const {
          << ", d_v=" << options.d_v_ << ", n_src_vocab=" << options.n_src_vocab_
          << ", len_max_seq=" << options.len_max_seq_
          << ", d_word_vec=" << options.d_word_vec_
+         << ", max_types=" << options.max_types_
          << ", n_layers=" << options.n_layers_ << ")";
 }
 
 std::vector<Tensor> TransformerEncoderImpl::forward(const Tensor& src_seq,
                                                     const Tensor& src_pos,
+                                                    const Tensor& types,
                                                     bool return_attns) {
   std::vector<Tensor> enc_slf_attn_list;
+  CHECK_EQ(src_seq.dim(), 2);
+  CHECK_EQ(src_seq.sizes(), src_pos.sizes());
+
   // -- Prepare masks
   Tensor slf_attn_mask = get_attn_key_pad_mask(src_seq, src_seq);
   Tensor non_pad_mask = get_non_pad_mask(src_seq);
   // # -- Forward
   Tensor enc_output =
-      src_word_emb->forward(src_seq) + pos_emb->forward(src_pos);
+    src_word_emb->forward(src_seq) + pos_emb->forward(src_pos);
+  if(types.dim()>0){
+    CHECK_EQ(src_seq.sizes(), types.sizes());
+    enc_output = enc_output + type_emb->forward(types);
+  }
   for (auto i = 0; i < options.n_layers_; i++) {
     auto elayer = encoder_stack->ptr<EncoderLayerImpl>(i);
     std::vector<Tensor> rets =

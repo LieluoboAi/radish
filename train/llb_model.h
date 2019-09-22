@@ -13,6 +13,8 @@
 
 #include <torch/torch.h>
 #include <memory>
+#include <tuple>
+
 
 namespace knlp {
 namespace train {
@@ -26,14 +28,11 @@ class TORCH_API LlbModel : public ::torch::nn::Module {
    * 有监督时有target，无监督时target没有设置
    * logits  ->  模型输出
    * target    -> 标注标签
+   * return   first tensor for loss, second for eval 
+   *            
    **/
-  virtual Tensor CalcLoss(const std::vector<Tensor>& examples, const Tensor& logits, const Tensor& target = {}) = 0;
+  virtual std::tuple<Tensor,Tensor> CalcLoss(const std::vector<Tensor>& examples, const Tensor& logits, const Tensor& target = {}) = 0;
 
-  /**
-   *
-   * 评估模型，在测试数据上，返回值类似loss, 越低表示模型效果越好
-   * */
-  virtual Tensor EvalModel(const std::vector<Tensor>& examples, const Tensor& loggit, const Tensor& target = {}) = 0;
 
   virtual Tensor forward(std::vector<Tensor> inputs) = 0;
 };

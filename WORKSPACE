@@ -70,10 +70,13 @@ http_archive(
 )
 
 
-git_repository(
+http_archive(
     name = "sentencepiece",
-    commit = "f577b13572544ae9eae2fff0e85949c4e05c5f0b",
-    remote = "https://github.com/LieluoboAi/sentencepiece.git",
+    strip_prefix = "sentencepiece-998ab31fe1388fd3b729079138d65f89b9a5c62e",
+    sha256 = "4567a038605b7da094089ae1dfe7ef7ed623c7aa76050a74aeaf7fd84b3fe390",
+    urls = [
+        "https://github.com/lieluoboai/sentencepiece/archive/998ab31fe1388fd3b729079138d65f89b9a5c62e.tar.gz",
+    ],
 )
 
 http_archive(

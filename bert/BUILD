@@ -3,16 +3,19 @@ package(
 )
 
 cc_library(
-    name = "span_bert_example",
+    name = "span_bert_example_parser",
     srcs = [
-        "span_bert_example.cc",
+        "span_bert_example_parser.cc",
     ],
     hdrs = [
-        "span_bert_example.h",
+        "span_bert_example_parser.h",
     ],
     deps = [
         "//third_party:pytorch",
-        "//train/data:llb_example",
+        "//train/data:example_parser",
+        "@com_google_glog//:glog",
+        "@sentencepiece//sentencepiece:error",
+        "@sentencepiece//sentencepiece:sentencepiece_processor",
     ],
 )
 
@@ -38,7 +41,7 @@ cc_binary(
     ],
     copts = [],
     deps = [
-        ":span_bert_example",
+        ":span_bert_example_parser",
         ":span_bert_model",
         "//train:llb_trainer",
         "@com_google_absl//absl/flags:flag",

@@ -10,28 +10,47 @@
  */
 #pragma once
 
-#include <torch/nn/module.h>
-#include <torch/torch.h>
-
-#include <torch/types.h>
+#include <memory>
 #include <string>
+
 #include "absl/strings/numbers.h"
 #include "glog/logging.h"
 #include "google/protobuf/util/json_util.h"
 #include "leveldb/db.h"
+#include "torch/nn/module.h"
+#include "torch/torch.h"
+#include "torch/types.h"
+#include "train/data/example_parser.h"
+#include "train/data/llb_example.h"
 #include "train/proto/example.pb.h"
 
 namespace knlp {
 namespace data {
 static std::string kTotalCountKey = "_TOTAL_COUNT_";
-template <class SampleT>
+static std::string kConfigMetaKey = "_CONF_METADATA_";
+
+template <class Parser>
 class LeveldbDataset
-    : public torch::data::Dataset<LeveldbDataset<SampleT>, SampleT> {
+    : public torch::data::Dataset<LeveldbDataset<Parser>, LlbExample> {
  public:
-  LeveldbDataset(const std::string& path) {
+  explicit LeveldbDataset(const std::string& path) {
     leveldb::Options opt;
     CHECK(!leveldb::DB::Open(opt, path, &db_).ok())
         << "Open tagged db error:" << path;
+    parser_.reset(new Parser());
+    leveldb::ReadOptions ropt;
+    std::string rawData;
+    leveldb::Status st =
+        db_->Get(ropt, leveldb::Slice(kConfigMetaKey), &rawData);
+    if (!st.ok()) {
+      VLOG(0) << "no config metadata for parser!";
+    } else {
+      Json::Value conf;
+      Json::Reader reader;
+      CHECK(reader.parse(rawData, conf))
+          << "parse from metadata conf error:" << rawData;
+      CHECK(parser_->Init(conf)) << "Init example parser error";
+    }
   }
   virtual ~LeveldbDataset() {
     if (db_) {
@@ -40,10 +59,10 @@ class LeveldbDataset
     db_ = nullptr;
   }
 
-  SampleT get(size_t index) override {
+  LlbExample get(size_t index) override {
     leveldb::ReadOptions ropt;
     std::string rawData;
-    SampleT ret;
+    LlbExample ret;
     leveldb::Status st =
         db_->Get(ropt, leveldb::Slice(std::to_string(index)), &rawData);
     if (!st.ok()) {
@@ -52,7 +71,7 @@ class LeveldbDataset
     }
     train::TrainExample exampleProto;
     exampleProto.ParseFromString(rawData);
-    ret.FromMessage(exampleProto);
+    CHECK(parser_->ParseOne(exampleProto, ret)) << "Parser example error";
     return ret;
   }
   torch::optional<size_t> size() const override {
@@ -74,6 +93,7 @@ class LeveldbDataset
 
  private:
   leveldb::DB* db_ = nullptr;
+  std::shared_ptr<ExampleParser> parser_;
 };
 
 }  // namespace data

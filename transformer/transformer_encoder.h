@@ -40,6 +40,7 @@ struct TORCH_API TransformerEncoderOptions {
   TORCH_ARG(int64_t, d_model);
   TORCH_ARG(int64_t, d_inner);
   TORCH_ARG(double, dropout) = 0.1;
+  TORCH_ARG(int64_t, max_types)=32;
 };
 
 class TORCH_API TransformerEncoderImpl
@@ -55,12 +56,13 @@ class TORCH_API TransformerEncoderImpl
 
   void pretty_print(std::ostream& stream) const override;
 
-  std::vector<Tensor> forward(const Tensor& src_seq, const Tensor& src_pos, bool return_attns=false);
+  std::vector<Tensor> forward(const Tensor& src_seq, const Tensor& src_pos, const Tensor& type_emb={}, bool return_attns=false);
 
   /// The options used to configure this module.
   TransformerEncoderOptions options;
   knlp::Embedding src_word_emb=nullptr;
   knlp::Embedding pos_emb=nullptr;
+  knlp::Embedding type_emb = nullptr;
   torch::nn::ModuleList  encoder_stack={};
 };
 

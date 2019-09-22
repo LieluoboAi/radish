@@ -16,7 +16,7 @@
 #include "absl/flags/parse.h"
 #include "glog/logging.h"
 
-#include "bert/span_bert_example.h"
+#include "bert/span_bert_example_parser.h"
 #include "bert/span_bert_model.h"
 
 #include "train/llb_trainer.h"
@@ -39,7 +39,8 @@ int main(int argc, char* argv[]) {
       absl::GetFlag(FLAGS_n_vocab), absl::GetFlag(FLAGS_max_seq_len),
       absl::GetFlag(FLAGS_d_word_vec));
   knlp::train::ProgressReporter reporter;
-  knlp::train::LlbTrainer<knlp::SpanBertExample, knlp::SpanBertModel> trainner;
+  knlp::train::LlbTrainer<knlp::SpanBertExampleParser, knlp::SpanBertModel>
+      trainner;
   std::string trainDataPath = absl::GetFlag(FLAGS_train_data_path);
   std::string testDataPath = absl::GetFlag(FLAGS_test_data_path);
   CHECK(!trainDataPath.empty()) << "train data path is empty";

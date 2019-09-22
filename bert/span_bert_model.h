@@ -40,21 +40,17 @@ class TORCH_API SpanBertModelImpl : public train::LlbModel {
       : SpanBertModelImpl(
             SpanBertOptions(n_src_vocab, len_max_seq, d_word_vec)) {}
   explicit SpanBertModelImpl(SpanBertOptions options);
-  
-  Tensor CalcLoss(const std::vector<Tensor>& examples, const Tensor& logits,
-                  const Tensor& target = {}) override;
 
-  /**
-   *
-   * 评估模型，在测试数据上，返回值类似loss, 越低表示模型效果越好
-   * */
-  Tensor EvalModel(const std::vector<Tensor>& examples, const Tensor& loggit,
-                   const Tensor& target = {}) override;
+  std::tuple<Tensor, Tensor> CalcLoss(const std::vector<Tensor>& examples,
+                                      const Tensor& logits,
+                                      const Tensor& target = {}) override;
 
   Tensor forward(std::vector<Tensor> inputs) override;
 
   SpanBertOptions options;
-  TransformerEncoder encoder=nullptr;
+  TransformerEncoder encoder = nullptr;
+  torch::nn::Linear proj = nullptr;
+  torch::nn::Linear span_proj = nullptr;
 };
 
 TORCH_MODULE(SpanBertModel);

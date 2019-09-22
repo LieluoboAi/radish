@@ -9,13 +9,42 @@
  * Copyright 2020 - 2019
  */
 #include "bert/span_bert_model.h"
+#include "glog/logging.h"
 
 namespace knlp {
+static Tensor batch_select(const Tensor& input, const Tensor& inds) {
+  // input [B,N,D]
+  // inds [B,S]  -> [B,S,D]
+  // ==>output: [B,S,D]
+  Tensor dummy =
+      inds.unsqueeze(2).expand({inds.size(0), inds.size(1), input.size(2)});
+  return input.gather(1, dummy);
+}
+
+static Tensor calc_loss_(const Tensor& pred, const Tensor& target) {
+  Tensor gold = target.contiguous().view(-1);
+  int n_class = pred.size(1);
+  Tensor one_hot = torch::zeros_like(pred).scatter(1, gold.view({-1, 1}), 1);
+  one_hot = one_hot * 0.9 + (1 - one_hot) * 0.1 / (n_class - 1);
+  Tensor log_prb = torch::log_softmax(pred, 1);
+  Tensor non_pad_mask = gold.ne(0);
+  Tensor loss = -(one_hot * log_prb).sum({1});
+  loss = loss.masked_select(non_pad_mask).sum();  // sum
+  return torch::div(loss, non_pad_mask.sum());
+}
+
+static Tensor calc_accuracy_(const Tensor& pred, const Tensor& target) {
+  Tensor predT = pred.argmax(1);
+  Tensor correct = predT.eq(target);
+  Tensor non_pad_mask = target.ne(0);
+  correct = correct.masked_select(non_pad_mask).sum();  // sum
+  return torch::div(correct, non_pad_mask.sum());
+}
 SpanBertOptions::SpanBertOptions(int64_t n_src_vocab, int64_t len_max_seq,
                                  int64_t d_word_vec, int64_t n_layers,
-                                 int64_t n_head, int64_t d_k,
-                                 int64_t d_v, int64_t d_model,
-                                 int64_t d_inner, double dropout)
+                                 int64_t n_head, int64_t d_k, int64_t d_v,
+                                 int64_t d_model, int64_t d_inner,
+                                 double dropout)
     : n_src_vocab_(n_src_vocab),
       len_max_seq_(len_max_seq),
       d_word_vec_(d_word_vec),
@@ -33,22 +62,48 @@ SpanBertModelImpl::SpanBertModelImpl(SpanBertOptions options_)
       options.n_layers_, options.n_head_, options.d_k_, options.d_k_,
       options.d_model_, options.d_inner_, options.dropout_);
   register_module("transformer_encoder", encoder);
+  proj = torch::nn::Linear(options.d_model_, options.n_src_vocab_);
+  register_module("final_proj", proj);
+  span_proj = torch::nn::Linear(options.d_model_, options.n_src_vocab_);
+  register_module("span_proj", span_proj);
+  torch::NoGradGuard guard;
+  proj->weight = encoder->src_word_emb->weight.t();
+  torch::nn::init::xavier_normal_(span_proj->weight);
 }
-Tensor SpanBertModelImpl::CalcLoss(const std::vector<Tensor>& examples,
-                                   const Tensor& logits, const Tensor& target) {
-  return {};
+
+std::tuple<Tensor, Tensor> SpanBertModelImpl::CalcLoss(
+    const std::vector<Tensor>& inputs, const Tensor& logits,
+    const Tensor& target) {
+  Tensor maskedOutput = batch_select(logits, inputs[1]);
+  Tensor spanLeftOutput = batch_select(logits, inputs[2]);
+  Tensor spanRightOutput = batch_select(logits, inputs[3]);
+  Tensor maskPreds = proj(maskedOutput);
+  Tensor mlm_loss = calc_loss_(maskPreds, target);
+  Tensor mlm_accuracy = calc_accuracy_(maskPreds, target);
+  Tensor spanPos = encoder->pos_emb(inputs[1]);
+  Tensor spanPreds = spanLeftOutput + spanRightOutput + spanPos;
+  spanPreds = span_proj(spanPreds);
+  Tensor span_loss = calc_loss_(spanPreds, target);
+  return {mlm_loss.add_(span_loss), mlm_accuracy};
 }
 
 /**
+ *inputs- 0 -src_seq
+ *        1 - masked_indexies
+ *        2 - span_left
+ *        3 - span_right
  *
- * 评估模型，在测试数据上，返回值类似loss, 越低表示模型效果越好
- * */
-Tensor SpanBertModelImpl::EvalModel(const std::vector<Tensor>& examples,
-                                    const Tensor& loggit,
-                                    const Tensor& target) {
-  return {};
+ */
+Tensor SpanBertModelImpl::forward(std::vector<Tensor> inputs) {
+  CHECK(inputs.size() >= 4);
+  // 0 - for seq
+  Tensor src_seq = inputs[0];
+  auto seqLen = src_seq.size(1);
+  Tensor pos_seq =
+      torch::arange(0, seqLen, torch::TensorOptions().dtype(torch::kInt64));
+  pos_seq = pos_seq.repeat({src_seq.size(0), 1});
+  auto rets = encoder(src_seq, pos_seq);
+  return rets[0];
 }
-
-Tensor SpanBertModelImpl::forward(std::vector<Tensor> inputs) { return {}; }
 
 }  // namespace knlp

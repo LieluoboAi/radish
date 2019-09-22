@@ -10,18 +10,14 @@
  */
 #pragma once
 
-#include <torch/torch.h>
-#include "train/proto/example.pb.h"
-
+#include "torch/torch.h"
 namespace knlp {
 namespace data {
 using Tensor = torch::Tensor;
 class LlbExample {
  public:
   virtual ~LlbExample(){};
-  // 把特征转化为feature list, 每个特征/组一个tensor
-  virtual std::vector<Tensor> ToTensorList() = 0;
-  virtual bool FromMessage(const train::TrainExample& ex) = 0;
+  std::vector<Tensor> features;
   Tensor target;
 };
 

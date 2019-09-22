@@ -24,7 +24,7 @@ namespace knlp {
 namespace train {
 using Tensor = torch::Tensor;
 
-template <class Sample, class Model>
+template <class SampleParser, class Model>
 class LlbTrainer {
  public:
   virtual ~LlbTrainer() {}
@@ -37,15 +37,15 @@ class LlbTrainer {
                 const std::string& testDatasetPath, double learningRate,
                 int batchSize, int64_t evalEvery, ProgressReporter* reporter,
                 int epochs = 50, int warmSteps = 1) {
-    data::LeveldbDataset<Sample> trainDataset(trainDatasetPath);
-    data::LeveldbDataset<Sample> testDataset(testDatasetPath);
+    data::LeveldbDataset<SampleParser> trainDataset(trainDatasetPath);
+    data::LeveldbDataset<SampleParser> testDataset(testDatasetPath);
     std::vector<std::vector<Tensor>> testDatas;
     std::vector<Tensor> testTargets;
     auto testLoader = torch::data::make_data_loader(
         testDataset, torch::data::DataLoaderOptions().batch_size(1).workers(1));
     for (auto& input : *testLoader) {
       auto& ex = input[0];
-      testDatas.push_back(ex.ToTensorList());
+      testDatas.push_back(ex.features);
       testTargets.push_back(ex.target);
     }
     knlp::optim::RAdam radam(
@@ -68,7 +68,7 @@ class LlbTrainer {
         std::vector<Tensor> batchTargets;
         for (size_t i = 0; i < inputs.size(); i++) {
           auto& ex = inputs[i];
-          batchDatas.push_back(ex.ToTensorList());
+          batchDatas.push_back(ex.features);
           batchTargets.push_back(ex.target);
         }
         std::vector<Tensor> examples;
@@ -78,10 +78,10 @@ class LlbTrainer {
         radam.zero_grad();
         Tensor logits = model->forward(examples);
         Tensor target = torch::stack({targets}, 0);
-        Tensor loss = model->CalcLoss(examples, logits, target);
+        auto [loss, eval] = model->CalcLoss(examples, logits, target);
         loss.backward();
         radam.step();
-        auto train_loss_v = loss.item().to<float>();
+        float train_loss_v = ((Tensor)loss).item().to<float>();
         if (steps % evalEvery == 0) {
           auto [loss_v, eval_v] =
               _run_on_test(model, testDatas, testTargets, batchSize);
@@ -114,10 +114,9 @@ class LlbTrainer {
       _prepare_bacth_data(testDatas, testTargets, off, end, examples, targets);
       Tensor logits = model->forward(examples);
       Tensor target = torch::stack({targets}, 0);
-      Tensor tloss = model->CalcLoss(examples, logits, target);
-      Tensor teval = model->EvalModel(examples, logits, target);
-      float tlv = tloss.item().to<float>();
-      float tev = teval.item().to<float>();
+      auto [tloss, teval] = model->CalcLoss(examples, logits, target);
+      float tlv = ((Tensor)tloss).item().to<float>();
+      float tev = ((Tensor)teval).item().to<float>();
       testLoss += tlv;
       evalValue += tev;
     }
