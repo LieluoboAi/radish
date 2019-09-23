@@ -21,8 +21,9 @@ static Tensor batch_select(const Tensor& input, const Tensor& inds) {
   return input.gather(1, dummy);
 }
 
-static Tensor calc_loss_(const Tensor& pred, const Tensor& target) {
+static Tensor calc_loss_(const Tensor& pred_, const Tensor& target) {
   Tensor gold = target.contiguous().view(-1);
+  Tensor pred = pred_.view({pred_.size(0)*pred_.size(1),-1});
   int n_class = pred.size(1);
   Tensor one_hot = torch::zeros_like(pred).scatter(1, gold.view({-1, 1}), 1);
   one_hot = one_hot * 0.9 + (1 - one_hot) * 0.1 / (n_class - 1);
@@ -34,7 +35,7 @@ static Tensor calc_loss_(const Tensor& pred, const Tensor& target) {
 }
 
 static Tensor calc_accuracy_(const Tensor& pred, const Tensor& target) {
-  Tensor predT = pred.argmax(1);
+  Tensor predT = pred.argmax(2);
   Tensor correct = predT.eq(target);
   Tensor non_pad_mask = target.ne(0);
   correct = correct.masked_select(non_pad_mask).sum();  // sum
@@ -64,7 +65,7 @@ SpanBertModelImpl::SpanBertModelImpl(SpanBertOptions options_)
   register_module("transformer_encoder", encoder);
   proj = torch::nn::Linear(options.d_model_, options.n_src_vocab_);
   register_module("final_proj", proj);
-  span_proj = torch::nn::Linear(options.d_model_, options.n_src_vocab_);
+  span_proj = torch::nn::Linear(options.d_model_ * 3, options.n_src_vocab_);
   register_module("span_proj", span_proj);
   torch::NoGradGuard guard;
   proj->weight = encoder->src_word_emb->weight.t();
@@ -81,7 +82,7 @@ std::tuple<Tensor, Tensor> SpanBertModelImpl::CalcLoss(
   Tensor mlm_loss = calc_loss_(maskPreds, target);
   Tensor mlm_accuracy = calc_accuracy_(maskPreds, target);
   Tensor spanPos = encoder->pos_emb(inputs[1]);
-  Tensor spanPreds = spanLeftOutput + spanRightOutput + spanPos;
+  Tensor spanPreds = torch::cat({spanLeftOutput, spanRightOutput, spanPos}, 2);
   spanPreds = span_proj(spanPreds);
   Tensor span_loss = calc_loss_(spanPreds, target);
   return {mlm_loss.add_(span_loss), mlm_accuracy};
