@@ -95,6 +95,7 @@ std::vector<Tensor> TransformerEncoderImpl::forward(const Tensor& src_seq,
                                                     const Tensor& types,
                                                     bool return_attns) {
   std::vector<Tensor> enc_slf_attn_list;
+  VLOG(0) << "src_seq:" << src_seq.sizes();
   CHECK_EQ(src_seq.dim(), 2);
   CHECK_EQ(src_seq.sizes(), src_pos.sizes());
 

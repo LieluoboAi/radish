@@ -48,6 +48,7 @@ class LlbTrainer {
       testDatas.push_back(ex.features);
       testTargets.push_back(ex.target);
     }
+    VLOG(0) << "loaded " << testDatas.size() << " test examples!";
     radish::optim::RAdam radam(
         model->parameters(),
         radish::optim::RAdamOptions(learningRate).warmup_steps(warmSteps));
