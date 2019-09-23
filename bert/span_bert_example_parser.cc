@@ -113,6 +113,7 @@ bool SpanBertExampleParser::_mask_seq(int maskId, int totalVocabSize, int len,
 SpanBertExampleParser::~SpanBertExampleParser() = default;
 bool SpanBertExampleParser::Init(const Json::Value& config) {
   std::string spm_model_path = config.get("spm_model_path", "").asString();
+  VLOG(0) << "got spm_model_path:" << spm_model_path;
   if (spm_model_path.empty()) {
     return false;
   }
@@ -120,6 +121,7 @@ bool SpanBertExampleParser::Init(const Json::Value& config) {
   if (!spp_->Load(spm_model_path).ok()) {
     return false;
   }
+  VLOG(0) << "loaded spm model done!!";
   return true;
 }
 

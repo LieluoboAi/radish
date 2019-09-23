@@ -34,9 +34,10 @@ class LeveldbDataset
     : public torch::data::Dataset<LeveldbDataset<Parser>, LlbExample> {
  public:
   explicit LeveldbDataset(const std::string& path) {
+    leveldb::DB* db = nullptr;
     leveldb::Options opt;
-    CHECK(!leveldb::DB::Open(opt, path, &db_).ok())
-        << "Open tagged db error:" << path;
+    CHECK(leveldb::DB::Open(opt, path, &db).ok()) << "Open  db error:" << path;
+    db_.reset(db);
     parser_.reset(new Parser());
     leveldb::ReadOptions ropt;
     std::string rawData;
@@ -47,17 +48,14 @@ class LeveldbDataset
     } else {
       Json::Value conf;
       Json::Reader reader;
+      VLOG(0) << "got config:" << rawData;
       CHECK(reader.parse(rawData, conf))
           << "parse from metadata conf error:" << rawData;
       CHECK(parser_->Init(conf)) << "Init example parser error";
+      VLOG(0) << "init data example parser success!";
     }
   }
-  virtual ~LeveldbDataset() {
-    if (db_) {
-      delete db_;
-    }
-    db_ = nullptr;
-  }
+  virtual ~LeveldbDataset() {}
 
   LlbExample get(size_t index) override {
     leveldb::ReadOptions ropt;
@@ -87,12 +85,13 @@ class LeveldbDataset
       if (!absl::SimpleAtoi(rawData, &count)) {
         return torch::nullopt;
       }
+      VLOG(0) << "total count :" << count;
       return {count};
     }
   }
 
  private:
-  leveldb::DB* db_ = nullptr;
+  std::shared_ptr<leveldb::DB> db_;
   std::shared_ptr<ExampleParser> parser_;
 };
 
