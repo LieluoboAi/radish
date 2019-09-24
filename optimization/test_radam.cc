@@ -78,7 +78,13 @@ int main() {
   int batch_size = 128;
   int iterations = 50;
   auto model = AlexNet(224);
-  radish::optim::RAdam optim(model->parameters(),
+  std::vector<Tensor> paramters;
+  std::vector<std::string> names;
+  for (auto kv : model->named_parameters()) {
+    paramters.push_back(kv.value());
+    names.push_back(kv.key());
+  }
+  radish::optim::RAdam optim(paramters, names,
                              radish::optim::RAdamOptions(1e-3));
 
   model->train();

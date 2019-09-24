@@ -11,15 +11,17 @@
 
 #include "optimization/radam.h"
 
-#include <torch/csrc/autograd/variable.h>
-#include <torch/nn/module.h>
-#include <torch/serialize/archive.h>
-#include <torch/utils.h>
-
-#include <ATen/ATen.h>
-
 #include <cmath>
 #include <functional>
+
+#include "absl/strings/ascii.h"
+
+#include "torch/csrc/autograd/variable.h"
+#include "torch/nn/module.h"
+#include "torch/serialize/archive.h"
+#include "torch/utils.h"
+
+#include "ATen/ATen.h"
 
 namespace radish {
 namespace optim {
@@ -29,15 +31,33 @@ using Tensor = ::torch::Tensor;
 RAdamOptions::RAdamOptions(double learning_rate)
     : learning_rate_(learning_rate) {}
 
+RAdam::RAdam(std::vector<torch::Tensor> parameters,
+             std::vector<std::string> names, const RAdamOptions& options)
+    : Optimizer(parameters), options(options), names_(names) {
+  p_inf_ = 2.0 / (1.0 - options.beta2_) - 1.0;
+  CHECK_EQ(names_.size(), parameters_.size());
+  need_weight_decay_.resize(names_.size());
+  for (size_t i = 0; i < names_.size(); i++) {
+    std::string lname = absl::AsciiStrToLower(names_[i]);
+    if (lname.find("bias") != std::string::npos ||
+        lname.find("norm") != std::string::npos) {
+      need_weight_decay_[i] = false;
+      // spdlog::warn("do not wd for :{}", names_[i]);
+    } else {
+      need_weight_decay_[i] = true;
+    }
+  }
+}
 void RAdam::step() {
   for (size_t i = 0; i < parameters_.size(); ++i) {
     Tensor p = parameters_.at(i);
+    bool need_weight_decay = need_weight_decay_.at(i);
     if (!p.grad().defined()) {
       continue;
     }
     auto lr = options.learning_rate_;
     // maybe place at the end
-    if (options.weight_decay_ > 0) {
+    if (options.weight_decay_ > 0 && need_weight_decay) {
       torch::NoGradGuard guard;
       p.grad() = p.grad() + options.weight_decay_ * p;
     }

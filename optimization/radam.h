@@ -11,13 +11,14 @@
 
 #pragma once
 
-#include <torch/arg.h>
-#include <torch/nn/module.h>
-#include <torch/optim/optimizer.h>
-#include <torch/optim/serialize.h>
-
 #include <utility>
 #include <vector>
+
+#include "torch/arg.h"
+#include "torch/nn/module.h"
+#include "torch/optim/optimizer.h"
+#include "torch/optim/serialize.h"
+#include "utils/logging.h"
 
 namespace torch {
 namespace serialize {
@@ -41,12 +42,8 @@ struct TORCH_API RAdamOptions {
 
 class TORCH_API RAdam : public ::torch::optim::Optimizer {
  public:
-  template <typename ParameterContainer>
-  RAdam(ParameterContainer&& parameters, const RAdamOptions& options)
-      : Optimizer(std::forward<ParameterContainer>(parameters)),
-        options(options) {
-    p_inf_ = 2.0 / (1.0 - options.beta2_) - 1.0;
-  }
+  RAdam(std::vector<torch::Tensor> parameters, std::vector<std::string> names,
+        const RAdamOptions& options);
 
   void step() override;
 
@@ -63,6 +60,8 @@ class TORCH_API RAdam : public ::torch::optim::Optimizer {
 
  private:
   RAdam() : options(0) {}
+  std::vector<std::string> names_;
+  std::vector<bool> need_weight_decay_;
 
   template <typename Self, typename Archive>
   static void serialize(Self& self, Archive& archive) {

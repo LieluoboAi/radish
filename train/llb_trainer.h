@@ -72,8 +72,16 @@ class LlbTrainer {
       spdlog::info("CUDA is available! Training on GPU.");
       device = torch::kCUDA;
     }
+
+    std::vector<Tensor> paramters;
+    std::vector<std::string> names;
+    for (auto kv : model->named_parameters()) {
+      paramters.push_back(kv.value());
+      names.push_back(kv.key());
+    }
+
     radish::optim::RAdam radam(
-        model->parameters(),
+        paramters, names,
         radish::optim::RAdamOptions(learningRate).warmup_steps(warmSteps));
 
     // log目录初始化

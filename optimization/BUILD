@@ -12,6 +12,8 @@ cc_library(
     ],
     deps = [
         "//third_party:pytorch",
+        "//utils:logging",
+        "@com_google_absl//absl/strings",
     ],
 )
 
