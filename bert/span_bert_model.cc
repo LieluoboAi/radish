@@ -35,6 +35,7 @@ static Tensor calc_loss_(const Tensor& pred_, const Tensor& target) {
 }
 
 static Tensor calc_accuracy_(const Tensor& pred, const Tensor& target) {
+  torch::NoGradGuard guard;
   Tensor predT = pred.argmax(2).contiguous().view(-1);
   Tensor gold = target.contiguous().view(-1);
   Tensor correct = predT.eq(gold);

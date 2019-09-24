@@ -153,20 +153,15 @@ bool SpanBertExampleParser::ParseOne(train::TrainExample& protoData,
     return false;
   }
   example.features.push_back(
-      torch::tensor(ex.x, at::dtype(torch::kInt64).requires_grad(false))
-          .clone());
-  example.features.push_back(
-      torch::tensor(ex.indexies, at::dtype(torch::kInt64).requires_grad(false))
-          .clone());
-  example.features.push_back(
-      torch::tensor(ex.spanLeft, at::dtype(torch::kInt64).requires_grad(false))
-          .clone());
-  example.features.push_back(
-      torch::tensor(ex.spanRight, at::dtype(torch::kInt64).requires_grad(false))
-          .clone());
+      torch::tensor(ex.x, at::dtype(torch::kInt64).requires_grad(false)));
+  example.features.push_back(torch::tensor(
+      ex.indexies, at::dtype(torch::kInt64).requires_grad(false)));
+  example.features.push_back(torch::tensor(
+      ex.spanLeft, at::dtype(torch::kInt64).requires_grad(false)));
+  example.features.push_back(torch::tensor(
+      ex.spanRight, at::dtype(torch::kInt64).requires_grad(false)));
   example.target =
-      torch::tensor(ex.target, at::dtype(torch::kInt64).requires_grad(false))
-          .clone();
+      torch::tensor(ex.target, at::dtype(torch::kInt64).requires_grad(false));
   return true;
 }
 }  // namespace radish
