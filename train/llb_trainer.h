@@ -10,23 +10,34 @@
  */
 
 #pragma once
-#include <torch/nn/module.h>
-#include <torch/torch.h>
 
-#include <torch/types.h>
-#include "train/data/leveldb_dataset.h"
-#include "train/progress_reporter.h"
+#include <experimental/filesystem>
+
+#include "torch/nn/module.h"
+#include "torch/torch.h"
+
+#include "torch/types.h"
 
 #include "optimization/radam.h"
+#include "train/data/leveldb_dataset.h"
+#include "train/model_io.h"
+#include "train/progress_reporter.h"
+#include "utils/logging.h"
 
 namespace radish {
 
 namespace train {
 using Tensor = torch::Tensor;
+namespace fs = std::experimental::filesystem;
 
-template <class SampleParser, class Model>
+template <class SampleParser, class Model, bool use_eval_for_best_model = false,
+          int64_t maxTrackHist = 8>
 class LlbTrainer {
  public:
+  LlbTrainer(std::string logdir)
+      : logdir_(logdir), best_loss_(1e9), no_best_track_times_(0) {
+    best_model_path_ = absl::StrCat(logdir_, "/best_model.ptc");
+  }
   virtual ~LlbTrainer() {}
 
   /**
@@ -43,19 +54,39 @@ class LlbTrainer {
     std::vector<Tensor> testTargets;
     auto testLoader = torch::data::make_data_loader(
         testDataset, torch::data::DataLoaderOptions().batch_size(1).workers(1));
+    spdlog::info("try load test dataset into memory....");
+    int ntest = 0;
     for (auto& input : *testLoader) {
       auto& ex = input[0];
       testDatas.push_back(ex.features);
       testTargets.push_back(ex.target);
+      ++ntest;
+      if (ntest >= 1000) {
+        break;
+      }
     }
-    VLOG(0) << "loaded " << testDatas.size() << " test examples!";
+    spdlog::info("loaded {} test examples!", testDatas.size());
+    torch::Device device = torch::kCPU;
+    spdlog::info("CUDA DEVICE COUNT: {}", torch::cuda::device_count());
+    if (torch::cuda::is_available()) {
+      spdlog::info("CUDA is available! Training on GPU.");
+      device = torch::kCUDA;
+    }
     radish::optim::RAdam radam(
         model->parameters(),
         radish::optim::RAdamOptions(learningRate).warmup_steps(warmSteps));
+
+    // log目录初始化
+    logdir_init_(model);
+    model->to(device);
     int64_t steps = 0;
     // first eval loss on test set
     auto [loss_v, eval_v] =
-        _run_on_test(model, testDatas, testTargets, batchSize);
+        _run_on_test(model, testDatas, testTargets, batchSize, device);
+    if (use_eval_for_best_model) {
+      loss_v = 0 - eval_v;
+    }
+    best_loss_ = loss_v;
     reporter->UpdateProgress(0, absl::nullopt, {loss_v}, {eval_v});
     for (int i = 0; i < epochs; i++) {
       auto trainLoader = torch::data::make_data_loader(
@@ -75,18 +106,34 @@ class LlbTrainer {
         std::vector<Tensor> examples;
         std::vector<Tensor> targets;
         _prepare_bacth_data(batchDatas, batchTargets, 0, batchDatas.size(),
-                            examples, targets);
+                            examples, targets, device);
         radam.zero_grad();
         Tensor logits = model->forward(examples);
-        Tensor target = torch::stack({targets}, 0);
-        auto [loss, eval] = model->CalcLoss(examples, logits, target);
+        Tensor target = torch::stack({targets}, 0).to(device);
+        auto [loss, _] = model->CalcLoss(examples, logits, target);
         loss.backward();
         radam.step();
         float train_loss_v = ((Tensor)loss).item().to<float>();
         if (steps % evalEvery == 0) {
           auto [loss_v, eval_v] =
-              _run_on_test(model, testDatas, testTargets, batchSize);
+              _run_on_test(model, testDatas, testTargets, batchSize, device);
           reporter->UpdateProgress(steps, train_loss_v, loss_v, eval_v);
+          if (use_eval_for_best_model) {
+            loss_v = 0 - eval_v;
+          }
+          if (loss_v < best_loss_) {
+            best_loss_ = loss_v;
+            no_best_track_times_ = 0;
+            SaveModel(model.ptr(), best_model_path_);
+          } else {
+            no_best_track_times_ += 1;
+            if (no_best_track_times_ > maxTrackHist) {
+              spdlog::warn(
+                  "always no improment after {} evals, minimal val is:{}!",
+                  maxTrackHist, best_loss_);
+              break;
+            }
+          }
         } else {
           reporter->UpdateProgress(steps, train_loss_v, absl::nullopt,
                                    absl::nullopt);
@@ -98,7 +145,8 @@ class LlbTrainer {
  private:
   std::tuple<float, float> _run_on_test(
       Model model, const std::vector<std::vector<Tensor>>& testDatas,
-      const std::vector<Tensor>& testTargets, int batchSize) {
+      const std::vector<Tensor>& testTargets, int batchSize,
+      torch::Device device) {
     model->eval();
     torch::NoGradGuard guard;
     double testLoss = 0, evalValue = 0;
@@ -112,9 +160,10 @@ class LlbTrainer {
       }
       std::vector<Tensor> examples;
       std::vector<Tensor> targets;
-      _prepare_bacth_data(testDatas, testTargets, off, end, examples, targets);
+      _prepare_bacth_data(testDatas, testTargets, off, end, examples, targets,
+                          device);
+      Tensor target = torch::stack({targets}, 0).to(device);
       Tensor logits = model->forward(examples);
-      Tensor target = torch::stack({targets}, 0);
       auto [tloss, teval] = model->CalcLoss(examples, logits, target);
       float tlv = ((Tensor)tloss).item().to<float>();
       float tev = ((Tensor)teval).item().to<float>();
@@ -127,7 +176,7 @@ class LlbTrainer {
   void _prepare_bacth_data(const std::vector<std::vector<Tensor>>& testDatas,
                            const std::vector<Tensor>& testTargets, size_t off,
                            size_t end, std::vector<Tensor>& examples,
-                           std::vector<Tensor>& targets) {
+                           std::vector<Tensor>& targets, torch::Device device) {
     if (off == end || testDatas.size() == 0) {
       return;
     }
@@ -136,16 +185,32 @@ class LlbTrainer {
     for (size_t i = off; i < end; i++) {
       const std::vector<Tensor>& feature = testDatas[i];
       for (size_t k = 0; k < feature.size(); k++) {
-        retFeatures[k].push_back(feature[k].unsqueeze(0));
+        retFeatures[k].push_back(feature[k]);
       }
-      targets.push_back(testTargets[i].unsqueeze(0));
+      targets.push_back(testTargets[i]);
     }
     examples.resize(retFeatures.size());
     for (size_t k = 0; k < retFeatures.size(); k++) {
-      // turn [1,.....]  into [bsz,....]
-      examples[k] = torch::stack({retFeatures[k]}, 0);
+      // turn [.....]  into [bsz,....]
+      examples[k] = torch::stack({retFeatures[k]}, 0).to(device);
     }
   }
+
+  bool logdir_init_(Model model) {
+    if (!fs::exists(logdir_)) {
+      fs::create_directory(logdir_);
+    } else {
+      if (fs::exists(best_model_path_)) {
+        LoadModel(model.ptr(), best_model_path_);
+        spdlog::info("loaded model from :{}!", best_model_path_);
+      }
+    }
+    return true;
+  }
+  std::string logdir_;
+  std::string best_model_path_;
+  float best_loss_;
+  int64_t no_best_track_times_;
 };
 }  // namespace train
 }  // namespace radish

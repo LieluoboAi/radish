@@ -24,6 +24,7 @@ cc_library(
         "layer_norm.h",
     ],
     deps = [
+        "//utils:logging",
         "//third_party:pytorch",
     ],
 )

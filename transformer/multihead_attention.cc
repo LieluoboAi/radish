@@ -11,16 +11,18 @@
 
 #include "transformer/multihead_attention.h"
 
-#include <torch/nn/init.h>
-#include <torch/nn/modules/dropout.h>
-#include <torch/types.h>
-#include <torch/utils.h>
 #include <cstddef>
 #include <ostream>
 #include <utility>
 #include <vector>
 
+#include "torch/nn/init.h"
+#include "torch/nn/modules/dropout.h"
+#include "torch/types.h"
+#include "torch/utils.h"
+
 #include "layers/layer_norm.h"
+#include "utils/logging.h"
 
 namespace radish {
 
@@ -52,6 +54,9 @@ void MultiheadAttentionImpl::reset() {
   register_module("attention", attention);
   fc = torch::nn::Linear(options.n_head_ * options.d_v_, options.d_model_);
   register_module("fc", fc);
+   layernorm = register_module(
+        "layernorm",
+        radish::LayerNorm(options.d_model_));
   dropout = register_module("dropout", torch::nn::Dropout(options.dropout_));
 
   torch::NoGradGuard guard;
@@ -80,6 +85,7 @@ std::vector<Tensor> MultiheadAttentionImpl::forward(const Tensor& q,
   CHECK_EQ(q.sizes(), k.sizes());
   CHECK_EQ(q.sizes(), v.sizes());
   CHECK_EQ(q.ndimension(), 3);
+
   int64_t n_head = options.n_head_;
   int64_t d_k = options.d_k_;
   int64_t d_v = options.d_v_;
@@ -105,7 +111,7 @@ std::vector<Tensor> MultiheadAttentionImpl::forward(const Tensor& q,
            .view({-1, len_v, d_v});  // (n*b) x lv x dv
 
   auto mask_ = mask.repeat({n_head, 1, 1});  // (n*b) x .. x ..
-  std::vector<Tensor> rets = attention->forward(q_, k_, v_, mask_);
+  std::vector<Tensor> rets = attention(q_, k_, v_, mask_);
   auto output = rets[0];
   const auto attn = rets[1];
   output = output.view({n_head, sz_b, len_q, d_v});
@@ -114,8 +120,8 @@ std::vector<Tensor> MultiheadAttentionImpl::forward(const Tensor& q,
                .view({sz_b, len_q, -1});  //  b x lq x (n*dv)
 
   output = dropout.forward(fc->forward(output));
-  output = layernorm.forward(output + residual);
-
+  output = output + residual;
+  output = layernorm.forward(output);
   return {output, attn};
 }
 }  // namespace radish

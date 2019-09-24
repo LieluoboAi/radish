@@ -2,8 +2,8 @@
 build --genrule_strategy=standalone
 build --spawn_strategy=standalone
 build --define=grpc_no_ares=true
-build --cxxopt=-std=c++1z
-
+build --cxxopt=-std=c++17
+build --linkopt=-lstdc++fs
 build --host_force_python=py2
 build --define=use_fast_cpp_protos=true
 build --define=allow_oversize_protos=true

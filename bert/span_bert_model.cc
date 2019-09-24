@@ -23,7 +23,7 @@ static Tensor batch_select(const Tensor& input, const Tensor& inds) {
 
 static Tensor calc_loss_(const Tensor& pred_, const Tensor& target) {
   Tensor gold = target.contiguous().view(-1);
-  Tensor pred = pred_.view({pred_.size(0)*pred_.size(1),-1});
+  Tensor pred = pred_.view({pred_.size(0) * pred_.size(1), -1});
   int n_class = pred.size(1);
   Tensor one_hot = torch::zeros_like(pred).scatter(1, gold.view({-1, 1}), 1);
   one_hot = one_hot * 0.9 + (1 - one_hot) * 0.1 / (n_class - 1);
@@ -35,11 +35,13 @@ static Tensor calc_loss_(const Tensor& pred_, const Tensor& target) {
 }
 
 static Tensor calc_accuracy_(const Tensor& pred, const Tensor& target) {
-  Tensor predT = pred.argmax(2);
-  Tensor correct = predT.eq(target);
-  Tensor non_pad_mask = target.ne(0);
+  Tensor predT = pred.argmax(2).contiguous().view(-1);
+  Tensor gold = target.contiguous().view(-1);
+  Tensor correct = predT.eq(gold);
+  Tensor non_pad_mask = gold.ne(0);
   correct = correct.masked_select(non_pad_mask).sum();  // sum
-  return torch::div(correct, non_pad_mask.sum());
+  return torch::div(correct.toType(torch::kFloat32),
+                    non_pad_mask.sum().toType(torch::kFloat32));
 }
 SpanBertOptions::SpanBertOptions(int64_t n_src_vocab, int64_t len_max_seq,
                                  int64_t d_word_vec, int64_t n_layers,
@@ -68,7 +70,7 @@ SpanBertModelImpl::SpanBertModelImpl(SpanBertOptions options_)
   span_proj = torch::nn::Linear(options.d_model_ * 3, options.n_src_vocab_);
   register_module("span_proj", span_proj);
   torch::NoGradGuard guard;
-  proj->weight = encoder->src_word_emb->weight.t();
+  proj->weight = encoder->src_word_emb->weight;
   torch::nn::init::xavier_normal_(span_proj->weight);
 }
 
@@ -102,7 +104,8 @@ Tensor SpanBertModelImpl::forward(std::vector<Tensor> inputs) {
   auto seqLen = src_seq.size(1);
   Tensor pos_seq =
       torch::arange(0, seqLen, torch::TensorOptions().dtype(torch::kInt64));
-  pos_seq = pos_seq.repeat({src_seq.size(0), 1});
+  // should be same device as src seq
+  pos_seq = pos_seq.repeat({src_seq.size(0), 1}).to(src_seq.device());
   auto rets = encoder(src_seq, pos_seq);
   return rets[0];
 }

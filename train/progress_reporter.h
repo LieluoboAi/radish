@@ -14,7 +14,7 @@
 #include <string>
 #include "absl/strings/str_cat.h"
 #include "absl/types/optional.h"
-#include "glog/logging.h"
+#include "utils/logging.h"
 
 namespace radish {
 namespace train {
@@ -23,17 +23,21 @@ class ProgressReporter {
   virtual void UpdateProgress(int64_t step, absl::optional<double> trainLoss,
                               absl::optional<double> testLoss,
                               absl::optional<double> testEval) {
+    if (step % 100) {
+      return;
+    }
     std::string toLog;
     if (trainLoss != absl::nullopt) {
       absl::StrAppend(&toLog, "Step:", step,
-                      "trainning loss:", trainLoss.value());
+                      "   trainning loss:", trainLoss.value());
     }
     if (testLoss != absl::nullopt) {
-      absl::StrAppend(&toLog, "test loss:", testLoss.value());
+      absl::StrAppend(&toLog, "  test loss:", testLoss.value());
     }
     if (testEval != absl::nullopt) {
-      absl::StrAppend(&toLog, "test eval:", testEval.value());
+      absl::StrAppend(&toLog, "  test eval:", testEval.value());
     }
+    spdlog::info(toLog);
   }
 };
 

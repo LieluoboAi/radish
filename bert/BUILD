@@ -13,7 +13,7 @@ cc_library(
     deps = [
         "//third_party:pytorch",
         "//train/data:example_parser",
-        "@com_google_glog//:glog",
+       "//utils:logging",
         "@sentencepiece//sentencepiece:error",
         "@sentencepiece//sentencepiece:sentencepiece_processor",
     ],
@@ -43,9 +43,9 @@ cc_binary(
     deps = [
         ":span_bert_example_parser",
         ":span_bert_model",
+        "//utils:logging",
         "//train:llb_trainer",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
-        "@com_google_glog//:glog",
     ],
 )

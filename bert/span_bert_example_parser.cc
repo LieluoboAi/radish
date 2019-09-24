@@ -13,8 +13,7 @@
 
 #include "absl/strings/ascii.h"
 #include "sentencepiece/sentencepiece_processor.h"
-
-#include "glog/logging.h"
+#include "utils/logging.h"
 
 namespace radish {
 // 200 -2
@@ -113,7 +112,7 @@ bool SpanBertExampleParser::_mask_seq(int maskId, int totalVocabSize, int len,
 SpanBertExampleParser::~SpanBertExampleParser() = default;
 bool SpanBertExampleParser::Init(const Json::Value& config) {
   std::string spm_model_path = config.get("spm_model_path", "").asString();
-  VLOG(0) << "got spm_model_path:" << spm_model_path;
+  spdlog::info("got spm_model_path:{}", spm_model_path);
   if (spm_model_path.empty()) {
     return false;
   }
@@ -121,7 +120,6 @@ bool SpanBertExampleParser::Init(const Json::Value& config) {
   if (!spp_->Load(spm_model_path).ok()) {
     return false;
   }
-  VLOG(0) << "loaded spm model done!!";
   return true;
 }
 
@@ -130,7 +128,7 @@ bool SpanBertExampleParser::ParseOne(train::TrainExample& protoData,
   auto stringMap = protoData.string_feature();
   auto it = stringMap.find("x");
   if (it == stringMap.end()) {
-    VLOG(0) << "no feature 'x'";
+    spdlog::warn("no feature 'x'");
     return false;
   }
   std::string x = absl::AsciiStrToLower(it->second);
@@ -141,7 +139,7 @@ bool SpanBertExampleParser::ParseOne(train::TrainExample& protoData,
   int maskId = totalVocabSize + 1;
   int sepId = totalVocabSize + 2;
   if (ids.size() < 2) {
-    VLOG(0) << "too short to be an example:" << ids.size();
+    spdlog::warn("too short to be an example:{}", ids.size());
     return false;
   }
   ex.x[0] = clsId;
@@ -151,23 +149,23 @@ bool SpanBertExampleParser::ParseOne(train::TrainExample& protoData,
   }
   ex.x[i] = sepId;
   if (!_mask_seq(maskId, totalVocabSize, i, ex)) {
-    VLOG(0) << "mask example error";
+    spdlog::warn("mask example error");
     return false;
   }
   example.features.push_back(
-      torch::tensor(ex.x, at::dtype(torch::kInt32).requires_grad(false))
+      torch::tensor(ex.x, at::dtype(torch::kInt64).requires_grad(false))
           .clone());
   example.features.push_back(
-      torch::tensor(ex.indexies, at::dtype(torch::kInt32).requires_grad(false))
+      torch::tensor(ex.indexies, at::dtype(torch::kInt64).requires_grad(false))
           .clone());
   example.features.push_back(
-      torch::tensor(ex.spanLeft, at::dtype(torch::kInt32).requires_grad(false))
+      torch::tensor(ex.spanLeft, at::dtype(torch::kInt64).requires_grad(false))
           .clone());
   example.features.push_back(
-      torch::tensor(ex.spanRight, at::dtype(torch::kInt32).requires_grad(false))
+      torch::tensor(ex.spanRight, at::dtype(torch::kInt64).requires_grad(false))
           .clone());
   example.target =
-      torch::tensor(ex.target, at::dtype(torch::kInt32).requires_grad(false))
+      torch::tensor(ex.target, at::dtype(torch::kInt64).requires_grad(false))
           .clone();
   return true;
 }

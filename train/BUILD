@@ -18,12 +18,23 @@ cc_library(
         "progress_reporter.h",
     ],
     deps = [
+        "//utils:logging",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:optional",
-        "@com_google_glog//:glog",
     ],
 )
 
+cc_library(
+    name = "model_io",
+    srcs = [
+        "model_io.cc",
+        "model_io.h"
+    ],
+    deps = [
+        "//utils:logging",
+        "//third_party:pytorch",
+    ],
+)
 cc_library(
     name = "llb_trainer",
     srcs = [
@@ -32,6 +43,8 @@ cc_library(
     deps = [
         ":progress_reporter",
         ":llb_model",
+        ":model_io",
+        "//utils:logging",
         "//optimization:radam",
         "//third_party:pytorch",
         "//train/data:leveldb_dataset",

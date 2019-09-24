@@ -40,7 +40,7 @@ void PositionwiseFCImpl::reset() {
   hidden2in = register_module(
       "hidden2in", torch::nn::Conv1d(options.d_hidden_, options.d_in_, 1));
   layernorm =
-      register_module("layernorm", LayerNorm(at::IntArrayRef{options.d_in_}));
+      register_module("layernorm", LayerNorm(options.d_in_));
 }
 
 void PositionwiseFCImpl::pretty_print(std::ostream& stream) const {

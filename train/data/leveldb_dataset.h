@@ -14,7 +14,6 @@
 #include <string>
 
 #include "absl/strings/numbers.h"
-#include "glog/logging.h"
 #include "google/protobuf/util/json_util.h"
 #include "leveldb/db.h"
 #include "torch/nn/module.h"
@@ -23,6 +22,7 @@
 #include "train/data/example_parser.h"
 #include "train/data/llb_example.h"
 #include "train/proto/example.pb.h"
+#include "utils/logging.h"
 
 namespace radish {
 namespace data {
@@ -44,15 +44,15 @@ class LeveldbDataset
     leveldb::Status st =
         db_->Get(ropt, leveldb::Slice(kConfigMetaKey), &rawData);
     if (!st.ok()) {
-      VLOG(0) << "no config metadata for parser!";
+      spdlog::warn("no config metadata for parser!");
     } else {
       Json::Value conf;
       Json::Reader reader;
-      VLOG(0) << "got config:" << rawData;
+      spdlog::info("got config: {}!", rawData);
       CHECK(reader.parse(rawData, conf))
           << "parse from metadata conf error:" << rawData;
       CHECK(parser_->Init(conf)) << "Init example parser error";
-      VLOG(0) << "init data example parser success!";
+      spdlog::info("init data example parser success!");
     }
   }
   virtual ~LeveldbDataset() {}
@@ -62,9 +62,9 @@ class LeveldbDataset
     std::string rawData;
     LlbExample ret;
     leveldb::Status st =
-        db_->Get(ropt, leveldb::Slice(std::to_string(index)), &rawData);
+        db_->Get(ropt, leveldb::Slice(std::to_string(index+1)), &rawData);
     if (!st.ok()) {
-      VLOG(0) << "key not found:" << index;
+      spdlog::warn("key not found:{}", index+1);
       return ret;
     }
     radish::train::TrainExample exampleProto;
@@ -78,14 +78,14 @@ class LeveldbDataset
     leveldb::Status st =
         db_->Get(ropt, leveldb::Slice(kTotalCountKey), &rawData);
     if (!st.ok()) {
-      VLOG(0) << "no total count key:" << kTotalCountKey;
+      spdlog::warn("no total count key::{}", kTotalCountKey);
       return torch::nullopt;
     } else {
       size_t count = 0;
       if (!absl::SimpleAtoi(rawData, &count)) {
         return torch::nullopt;
       }
-      VLOG(0) << "total count :" << count;
+      spdlog::info("total count :::{}", count);
       return {count};
     }
   }

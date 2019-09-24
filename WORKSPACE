@@ -1,4 +1,3 @@
-
 workspace(name = "com_koth_knlp")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -14,7 +13,6 @@ http_archive(
     ],
 )
 
-
 http_archive(
     name = "boringssl",
     sha256 = "524ba98a56300149696481b4cb9ddebd0c7b7ac9b9f6edee81da2d2d7e5d2bb3",
@@ -24,8 +22,6 @@ http_archive(
         "https://github.com/google/boringssl/archive/a0fb951d2a26a8ee746b52f3ba81ab011a0af778.tar.gz",
     ],
 )
-
-
 
 http_archive(
     name = "com_github_nanopb_nanopb",
@@ -54,8 +50,6 @@ http_archive(
     ],
 )
 
-
-
 http_archive(
     name = "boost",
     build_file = "//third_party:boost.BUILD",
@@ -69,11 +63,10 @@ http_archive(
     ],
 )
 
-
 http_archive(
     name = "sentencepiece",
-    strip_prefix = "sentencepiece-998ab31fe1388fd3b729079138d65f89b9a5c62e",
     sha256 = "4567a038605b7da094089ae1dfe7ef7ed623c7aa76050a74aeaf7fd84b3fe390",
+    strip_prefix = "sentencepiece-998ab31fe1388fd3b729079138d65f89b9a5c62e",
     urls = [
         "https://github.com/lieluoboai/sentencepiece/archive/998ab31fe1388fd3b729079138d65f89b9a5c62e.tar.gz",
     ],
@@ -88,7 +81,6 @@ http_archive(
     ],
 )
 
-
 http_archive(
     name = "com_google_protobuf_cc",
     sha256 = "f1748989842b46fa208b2a6e4e2785133cfcc3e4d43c17fecb023733f0f5443f",
@@ -97,7 +89,6 @@ http_archive(
         "https://github.com/protocolbuffers/protobuf/archive/v3.7.1.tar.gz",
     ],
 )
-
 
 bind(
     name = "protocol_compiler",
@@ -114,8 +105,6 @@ bind(
     actual = "@com_google_protobuf//:protobuf_headers",
 )
 
-
-
 http_archive(
     name = "com_google_absl",
     build_file = "//third_party:absl.BUILD",
@@ -127,7 +116,6 @@ http_archive(
     ],
 )
 
-
 http_archive(
     name = "com_github_grpc_grpc",
     sha256 = "11ac793c562143d52fd440f6549588712badc79211cdc8c509b183cb69bddad8",
@@ -138,11 +126,9 @@ http_archive(
     ],
 )
 
-
-load("@com_github_grpc_grpc//bazel:grpc_deps.bzl","grpc_deps")
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 
 grpc_deps()
-
 
 http_archive(
     name = "libtorch_unix",
@@ -152,14 +138,12 @@ http_archive(
     url = "https://download.pytorch.org/libtorch/cpu/libtorch-shared-with-deps-1.2.0.zip",
 )
 
-
 http_archive(
     name = "libtorch_mac",
     build_file = "//third_party:libtorch_mac.BUILD",
     strip_prefix = "libtorch",
     url = "https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.2.0.zip",
 )
-
 
 http_archive(
     name = "curl",
@@ -171,7 +155,6 @@ http_archive(
         "https://curl.haxx.se/download/curl-7.60.0.tar.gz",
     ],
 )
-
 
 http_archive(
     name = "jsoncpp",
@@ -199,7 +182,6 @@ rules_proto_dependencies()
 
 rules_proto_toolchains()
 
-
 skylib_version = "0.8.0"
 
 http_archive(
@@ -208,8 +190,6 @@ http_archive(
     type = "tar.gz",
     url = "https://github.com/bazelbuild/bazel-skylib/releases/download/{}/bazel-skylib.{}.tar.gz".format(skylib_version, skylib_version),
 )
-
-
 
 # Needed by gRPC
 bind(
@@ -269,9 +249,29 @@ bind(
 )
 
 http_archive(
+    name = "spdlog",
+    build_file = "//third_party:spdlog.BUILD",
+    strip_prefix = "spdlog-a7148b718ea2fabb8387cb90aee9bf448da63e65",
+    sha256 = "c85af153ad14cf26e32396ba4d19d2371b16f99151f23aa3189e99e161813cdb",
+    urls = [
+        "https://github.com/gabime/spdlog/archive/a7148b718ea2fabb8387cb90aee9bf448da63e65.tar.gz",
+    ],
+)
+
+http_archive(
+    name = "fmtlib",
+    build_file = "//third_party:fmtlib.BUILD",
+    strip_prefix = "fmt-9e554999ce02cf86fcdfe74fe740c4fe3f5a56d5",
+    sha256 = "f131a0ecef42c84f59c087f9a1ab06cedb38c66e35b1cee231056b5e888e8cf6",
+    urls = [
+        "https://github.com/fmtlib/fmt/archive/9e554999ce02cf86fcdfe74fe740c4fe3f5a56d5.tar.gz",
+    ],
+)
+
+http_archive(
     name = "com_github_lieluoboai_leveldb",
-    strip_prefix = "leveldb-3d51bafc1764d7115db5f83b4a838bc6e630449a",
     sha256 = "2c8815db8f1b5031e62d530e13ef31242f85ebcc6c7b486d8897474df482786f",
+    strip_prefix = "leveldb-3d51bafc1764d7115db5f83b4a838bc6e630449a",
     urls = [
         "https://github.com/lieluoboai/leveldb/archive/3d51bafc1764d7115db5f83b4a838bc6e630449a.tar.gz",
     ],

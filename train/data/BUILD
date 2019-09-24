@@ -33,8 +33,8 @@ cc_library(
     deps = [
         "//third_party:pytorch",
         "//train/proto:example_proto_cc",
+        "//utils:logging",
         "@com_google_absl//absl/strings:strings",
-        "@com_google_glog//:glog",
         "@com_github_google_leveldb//:leveldb",
     ],
 )

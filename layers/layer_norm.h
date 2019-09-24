@@ -19,9 +19,9 @@ namespace radish {
 using Tensor = ::torch::Tensor;
 /// Options for the `LayerNorm` module.
 struct TORCH_API LayerNormOptions {
-  LayerNormOptions(torch::IntArrayRef shape, double eps = 0.00001,
+  LayerNormOptions(int lastDim, double eps = 0.00001,
                    bool elementAffine = true);
-  TORCH_ARG(torch::IntArrayRef, shape);
+  TORCH_ARG(int, last_dim);
   // eps
   TORCH_ARG(double, eps) = 0.00001;
   // element affine
@@ -30,8 +30,8 @@ struct TORCH_API LayerNormOptions {
 
 class TORCH_API LayerNormImpl : public torch::nn::Cloneable<LayerNormImpl> {
  public:
-  LayerNormImpl(torch::IntArrayRef shape, double eps)
-      : LayerNormImpl(LayerNormOptions(shape, eps, true)) {}
+  LayerNormImpl(int lastDim, double eps=0.00001)
+      : LayerNormImpl(LayerNormOptions(lastDim, eps, true)) {}
   explicit LayerNormImpl(LayerNormOptions options);
 
   void reset() override;

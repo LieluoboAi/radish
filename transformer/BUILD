@@ -40,6 +40,7 @@ cc_library(
     deps = [
         ":scale_product_attention",
         "//layers:layer_norm",
+        "//utils:logging",
         "//third_party:pytorch",
     ],
 )
@@ -87,7 +88,7 @@ cc_library(
         "//layers:embedding",
         "//layers:modulelist",
         "//third_party:pytorch",
-        "@com_google_glog//:glog",
+        "//utils:logging",
     ],
 )
 

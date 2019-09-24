@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-#include "glog/logging.h"
+#include "utils/logging.h"
 
 namespace radish {
 
@@ -95,7 +95,6 @@ std::vector<Tensor> TransformerEncoderImpl::forward(const Tensor& src_seq,
                                                     const Tensor& types,
                                                     bool return_attns) {
   std::vector<Tensor> enc_slf_attn_list;
-  VLOG(0) << "src_seq:" << src_seq.sizes();
   CHECK_EQ(src_seq.dim(), 2);
   CHECK_EQ(src_seq.sizes(), src_pos.sizes());
 
@@ -105,7 +104,7 @@ std::vector<Tensor> TransformerEncoderImpl::forward(const Tensor& src_seq,
   // # -- Forward
   Tensor enc_output =
       src_word_emb->forward(src_seq) + pos_emb->forward(src_pos);
-  if (types.dim() > 0) {
+  if (types.numel()> 0) {
     CHECK_EQ(src_seq.sizes(), types.sizes());
     enc_output = enc_output + type_emb->forward(types);
   }
