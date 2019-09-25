@@ -25,13 +25,17 @@ static Tensor calc_loss_(const Tensor& pred_, const Tensor& target) {
   Tensor gold = target.contiguous().view(-1);
   Tensor pred = pred_.view({pred_.size(0) * pred_.size(1), -1});
   int n_class = pred.size(1);
-  Tensor one_hot = torch::zeros_like(pred).scatter(1, gold.view({-1, 1}), 1);
-  one_hot = one_hot * 0.9 + (1 - one_hot) * 0.1 / (n_class - 1);
+  Tensor one_hot = torch::zeros_like(pred);
+  one_hot.scatter_(1, gold.view({-1, 1}), 1);
+  Tensor negOneHot = 1 - one_hot;
+  one_hot.mul_(0.9).add_(negOneHot, 0.1 / static_cast<float>(n_class - 1));
+  // one_hot = one_hot * 0.9 + (1 - one_hot) * 0.1 / (n_class - 1);
   Tensor log_prb = torch::log_softmax(pred, 1);
   Tensor non_pad_mask = gold.ne(0);
-  Tensor loss = -(one_hot * log_prb).sum({1});
+  Tensor loss = one_hot.mul_(log_prb).sum({1});
+  loss.neg_();
   loss = loss.masked_select(non_pad_mask).sum();  // sum
-  return torch::div(loss, non_pad_mask.sum());
+  return loss.div_(non_pad_mask.sum());
 }
 
 static Tensor calc_accuracy_(const Tensor& pred, const Tensor& target) {

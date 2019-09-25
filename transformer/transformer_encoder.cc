@@ -103,10 +103,11 @@ std::vector<Tensor> TransformerEncoderImpl::forward(const Tensor& src_seq,
   Tensor non_pad_mask = get_non_pad_mask(src_seq);
   // # -- Forward
   Tensor enc_output =
-      src_word_emb->forward(src_seq) + pos_emb->forward(src_pos);
+      src_word_emb->forward(src_seq);
+  enc_output.add_( pos_emb->forward(src_pos));
   if (types.numel()> 0) {
     CHECK_EQ(src_seq.sizes(), types.sizes());
-    enc_output = enc_output + type_emb->forward(types);
+    enc_output.add_(type_emb->forward(types));
   }
   for (auto i = 0; i < options.n_layers_; i++) {
     auto elayer = encoder_stack->ptr<EncoderLayerImpl>(i);

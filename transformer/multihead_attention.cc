@@ -120,7 +120,7 @@ std::vector<Tensor> MultiheadAttentionImpl::forward(const Tensor& q,
                .view({sz_b, len_q, -1});  //  b x lq x (n*dv)
 
   output = dropout.forward(fc->forward(output));
-  output = output + residual;
+  output.add_(residual);
   output = layernorm.forward(output);
   return {output, attn};
 }

@@ -31,7 +31,8 @@ using Tensor = torch::Tensor;
 namespace fs = std::experimental::filesystem;
 
 template <class SampleParser, class Model, bool use_eval_for_best_model = false,
-          int64_t maxTrackHist = 8, int64_t update_per_batches = 1>
+          int64_t maxTrackHist = 8, int64_t update_per_batches = 1,
+          int64_t max_test_load = 0>
 class LlbTrainer {
  public:
   LlbTrainer(std::string logdir)
@@ -47,20 +48,27 @@ class LlbTrainer {
   void MainLoop(Model model, const std::string& trainDatasetPath,
                 const std::string& testDatasetPath, double learningRate,
                 int batchSize, int64_t evalEvery, ProgressReporter* reporter,
-                int epochs = 50, int warmSteps = 1) {
+                int epochs = 50, int warmSteps = 1, int64_t maxTestNum = 0) {
     data::LeveldbDataset<SampleParser> trainDataset(trainDatasetPath);
     data::LeveldbDataset<SampleParser> testDataset(testDatasetPath);
     std::vector<std::vector<Tensor>> testDatas;
     std::vector<Tensor> testTargets;
     auto testLoader = torch::data::make_data_loader(
         testDataset, torch::data::DataLoaderOptions().batch_size(1).workers(1));
-    spdlog::info("try load test dataset into memory....");
+    spdlog::info(
+        "try load test dataset into memory,  max test examples allowed to "
+        "load={}....",
+        maxTestNum);
     int ntest = 0;
     for (auto& input : *testLoader) {
       auto& ex = input[0];
       testDatas.push_back(ex.features);
       testTargets.push_back(ex.target);
       ++ntest;
+      if (maxTestNum > 0 && ntest >= maxTestNum) {
+        spdlog::info("only allow to load {} test examples!", maxTestNum);
+        break;
+      }
     }
     spdlog::info("loaded {} test examples!", testDatas.size());
     torch::Device device = torch::kCPU;

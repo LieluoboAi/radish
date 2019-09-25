@@ -53,7 +53,7 @@ Tensor PositionwiseFCImpl::forward(const Tensor& input) {
   const auto residual = input;
   Tensor output = input.transpose(1, 2);
   output = hidden2in.forward(torch::relu(in2hidden.forward(output)));
-  output = output.transpose(1, 2);
+  output.transpose_(1, 2);
   output = dropout.forward(output);
   return layernorm.forward(output.add_(residual));
 }
