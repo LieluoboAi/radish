@@ -72,11 +72,10 @@ SpanBertModelImpl::SpanBertModelImpl(SpanBertOptions options_)
   register_module("transformer_encoder", encoder);
   proj = torch::nn::Linear(options.d_model_, options.n_src_vocab_);
   register_module("final_proj", proj);
-  span_proj = torch::nn::Linear(options.d_model_ * 3, options.n_src_vocab_);
-  register_module("span_proj", span_proj);
+  span_hidden_proj = torch::nn::Linear(options.d_model_ * 3, options.d_model_);
+  register_module("span_hidden_proj", span_hidden_proj);
   torch::NoGradGuard guard;
   proj->weight = encoder->src_word_emb->weight;
-  torch::nn::init::xavier_normal_(span_proj->weight);
 }
 
 std::tuple<Tensor, Tensor> SpanBertModelImpl::CalcLoss(
@@ -94,7 +93,9 @@ std::tuple<Tensor, Tensor> SpanBertModelImpl::CalcLoss(
   }
   Tensor spanPos = encoder->pos_emb(inputs[1]);
   Tensor spanPreds = torch::cat({spanLeftOutput, spanRightOutput, spanPos}, 2);
-  spanPreds = span_proj(spanPreds);
+  Tensor span_hidden = span_hidden_proj(spanPreds);
+  span_hidden = torch::gelu(span_hidden);
+  spanPreds = proj(span_hidden);
   Tensor span_loss = calc_loss_(spanPreds, target);
   return {mlm_loss.add_(span_loss), mlm_accuracy};
 }

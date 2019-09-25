@@ -51,7 +51,7 @@ class TORCH_API SpanBertModelImpl : public train::LlbModel {
   SpanBertOptions options;
   TransformerEncoder encoder = nullptr;
   torch::nn::Linear proj = nullptr;
-  torch::nn::Linear span_proj = nullptr;
+  torch::nn::Linear span_hidden_proj = nullptr;
 };
 
 TORCH_MODULE(SpanBertModel);
