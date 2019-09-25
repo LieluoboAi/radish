@@ -61,9 +61,6 @@ class LlbTrainer {
       testDatas.push_back(ex.features);
       testTargets.push_back(ex.target);
       ++ntest;
-      if (ntest >= 1000) {
-        break;
-      }
     }
     spdlog::info("loaded {} test examples!", testDatas.size());
     torch::Device device = torch::kCPU;
