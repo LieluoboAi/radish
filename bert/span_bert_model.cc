@@ -88,7 +88,7 @@ std::tuple<Tensor, Tensor> SpanBertModelImpl::CalcLoss(
   Tensor spanLeftOutput = batch_select(logits, inputs[2]);
   Tensor spanRightOutput = batch_select(logits, inputs[3]);
 
-  Tensor maskPreds = proj(laynorm(maskedOutput));
+  Tensor maskPreds = proj(maskedOutput);
   Tensor mlm_loss = calc_loss_(maskPreds, target);
   Tensor mlm_accuracy =
       torch::tensor({0}, torch::TensorOptions().device(mlm_loss.device()));
