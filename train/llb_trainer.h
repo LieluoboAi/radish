@@ -74,7 +74,12 @@ class LlbTrainer {
     torch::Device device = torch::kCPU;
     spdlog::info("CUDA DEVICE COUNT: {}", torch::cuda::device_count());
     if (torch::cuda::is_available()) {
-      spdlog::info("CUDA is available! Training on GPU.");
+      if (torch::cuda::cudnn_is_available()) {
+        spdlog::info("CUDA  and cudnn is available! Training on GPU.");
+      } else {
+        spdlog::info(
+            "CUDA is available, but cudnn is not available! Training on GPU.");
+      }
       device = torch::kCUDA;
     }
 
@@ -87,7 +92,7 @@ class LlbTrainer {
 
     radish::optim::RAdam radam(
         paramters, names,
-        radish::optim::RAdamOptions(learningRate).warmup_steps(warmSteps));
+        radish::optim::RAdamOptions(learningRate).warmup_steps(warmSteps).weight_decay(0.01));
 
     // log目录初始化
     logdir_init_(model);

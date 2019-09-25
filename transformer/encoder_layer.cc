@@ -60,8 +60,8 @@ std::vector<Tensor> EncoderLayerImpl::forward(const Tensor& enc_input,
                                               const Tensor& slf_attn_mask) {
   std::vector<Tensor> rets =
       slf_attn->forward(enc_input, enc_input, enc_input, slf_attn_mask);
-  Tensor enc_output = rets[0];
-  Tensor enc_slf_attn = rets[1];
+  Tensor& enc_output = rets[0];
+  Tensor& enc_slf_attn = rets[1];
   if (non_pad_mask.numel() > 0) {
     enc_output.mul_(non_pad_mask);
   }

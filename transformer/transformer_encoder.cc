@@ -53,8 +53,8 @@ static Tensor get_attn_key_pad_mask(const Tensor& seq_k, const Tensor& seq_q) {
 }
 
 static Tensor get_non_pad_mask(const Tensor& seq) {
-  CHECK_EQ(seq.ndimension(), 2);
-  return seq.ne(0).toType(c10::ScalarType::Float).unsqueeze(-1);
+  CHECK_EQ(seq.dim(), 2);
+  return seq.ne(0).toType(torch::kFloat32).unsqueeze(-1);
 }
 
 void TransformerEncoderImpl::reset() {
