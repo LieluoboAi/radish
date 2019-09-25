@@ -77,13 +77,17 @@ SpanBertModelImpl::SpanBertModelImpl(SpanBertOptions options_)
 
 std::tuple<Tensor, Tensor> SpanBertModelImpl::CalcLoss(
     const std::vector<Tensor>& inputs, const Tensor& logits,
-    const Tensor& target) {
+    const Tensor& target, bool train) {
   Tensor maskedOutput = batch_select(logits, inputs[1]);
   Tensor spanLeftOutput = batch_select(logits, inputs[2]);
   Tensor spanRightOutput = batch_select(logits, inputs[3]);
   Tensor maskPreds = proj(maskedOutput);
   Tensor mlm_loss = calc_loss_(maskPreds, target);
-  Tensor mlm_accuracy = calc_accuracy_(maskPreds, target);
+  Tensor mlm_accuracy =
+      torch::tensor({0}, torch::TensorOptions().device(mlm_loss.device()));
+  if (!train) {
+    mlm_accuracy = calc_accuracy_(maskPreds, target);
+  }
   Tensor spanPos = encoder->pos_emb(inputs[1]);
   Tensor spanPreds = torch::cat({spanLeftOutput, spanRightOutput, spanPos}, 2);
   spanPreds = span_proj(spanPreds);

@@ -22,6 +22,7 @@
 #include "torch/utils.h"
 
 #include "ATen/ATen.h"
+#include "utils/tensor_util.h"
 
 namespace radish {
 namespace optim {
@@ -48,7 +49,10 @@ RAdam::RAdam(std::vector<torch::Tensor> parameters,
     }
   }
 }
+
 void RAdam::step() {
+  // 先clip下梯度
+  radish::utils::ClipGradienNorm(parameters_, options.clip_norm_);
   for (size_t i = 0; i < parameters_.size(); ++i) {
     Tensor p = parameters_.at(i);
     bool need_weight_decay = need_weight_decay_.at(i);

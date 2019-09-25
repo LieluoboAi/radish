@@ -11,8 +11,8 @@ cc_library(
         "radam.h",
     ],
     deps = [
-        "//third_party:pytorch",
         "//utils:logging",
+        "//utils:tensor_util",
         "@com_google_absl//absl/strings",
     ],
 )

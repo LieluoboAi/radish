@@ -31,7 +31,7 @@ using Tensor = torch::Tensor;
 namespace fs = std::experimental::filesystem;
 
 template <class SampleParser, class Model, bool use_eval_for_best_model = false,
-          int64_t maxTrackHist = 8>
+          int64_t maxTrackHist = 8, int64_t update_per_batches = 1>
 class LlbTrainer {
  public:
   LlbTrainer(std::string logdir)
@@ -87,7 +87,9 @@ class LlbTrainer {
     // log目录初始化
     logdir_init_(model);
     model->to(device);
+    radam.zero_grad();
     int64_t steps = 0;
+    int64_t update_batch = 0;
     // first eval loss on test set
     auto [loss_v, eval_v] =
         _run_on_test(model, testDatas, testTargets, batchSize, device);
@@ -115,12 +117,17 @@ class LlbTrainer {
         std::vector<Tensor> targets;
         _prepare_bacth_data(batchDatas, batchTargets, 0, batchDatas.size(),
                             examples, targets, device);
-        radam.zero_grad();
+
         Tensor logits = model->forward(examples);
         Tensor target = torch::stack({targets}, 0).to(device);
         auto [loss, _] = model->CalcLoss(examples, logits, target);
         loss.backward();
-        radam.step();
+        update_batch += 1;
+        if (update_batch % update_per_batches == 0) {
+          radam.step();
+          update_batch = 0;
+          radam.zero_grad();
+        }
         float train_loss_v = ((Tensor)loss).item().to<float>();
         if (steps % evalEvery == 0) {
           auto [loss_v, eval_v] =
@@ -148,6 +155,11 @@ class LlbTrainer {
         }
       }
     }
+    if (update_batch > 0) {
+      radam.step();
+      update_batch = 0;
+      radam.zero_grad();
+    }
   }
 
  private:
@@ -172,7 +184,7 @@ class LlbTrainer {
                           device);
       Tensor target = torch::stack({targets}, 0).to(device);
       Tensor logits = model->forward(examples);
-      auto [tloss, teval] = model->CalcLoss(examples, logits, target);
+      auto [tloss, teval] = model->CalcLoss(examples, logits, target, false);
       float tlv = ((Tensor)tloss).item().to<float>();
       float tev = ((Tensor)teval).item().to<float>();
       testLoss += tlv;

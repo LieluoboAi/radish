@@ -11,28 +11,22 @@
 #include "train/model_io.h"
 
 #include "utils/logging.h"
-
+#include "utils/tensor_util.h"
 namespace radish {
 namespace train {
-static bool is_empty(const torch::Tensor& x) {
-  if (x.defined() && x.dim() > 0 && x.size(0) != 0 && x.numel() > 0) {
-    return false;
-  } else {
-    return true;
-  }
-}
+
 void SaveModel(std::shared_ptr<torch::nn::Module> module,
                const std::string& file_name) {
   torch::serialize::OutputArchive archive;
   auto params = module->named_parameters(true /*recurse*/);
   auto buffers = module->named_buffers(true /*recurse*/);
   for (const auto& val : params) {
-    if (!is_empty(val.value())) {
+    if (!radish::utils::IsEmpty(val.value())) {
       archive.write(val.key(), val.value());
     }
   }
   for (const auto& val : buffers) {
-    if (!is_empty(val.value())) {
+    if (!radish::utils::IsEmpty(val.value())) {
       archive.write(val.key(), val.value(), /*is_buffer*/ true);
     }
   }

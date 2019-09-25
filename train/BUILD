@@ -32,6 +32,7 @@ cc_library(
     ],
     deps = [
         "//utils:logging",
+        "//utils:tensor_util",
         "//third_party:pytorch",
     ],
 )

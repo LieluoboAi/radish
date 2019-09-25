@@ -32,7 +32,7 @@ class TORCH_API LlbModel : public ::torch::nn::Module {
    **/
   virtual std::tuple<Tensor, Tensor> CalcLoss(
       const std::vector<Tensor>& examples, const Tensor& logits,
-      const Tensor& target = {}) = 0;
+      const Tensor& target = {}, bool train=true) = 0;
 
   virtual Tensor forward(std::vector<Tensor> inputs) = 0;
 };

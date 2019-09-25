@@ -12,3 +12,14 @@ cc_library(
         "@spdlog//:spdlog",
     ],
 )
+
+cc_library(
+    name = "tensor_util",
+    srcs = [
+        "tensor_util.h",
+         "tensor_util.cc",
+    ],
+    deps = [
+        "//third_party:pytorch",
+    ],
+)

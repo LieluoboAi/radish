@@ -37,6 +37,7 @@ struct TORCH_API RAdamOptions {
   TORCH_ARG(double, beta2) = 0.999;
   TORCH_ARG(double, weight_decay) = 0;
   TORCH_ARG(double, eps) = 1e-8;
+  TORCH_ARG(double, clip_norm) = 3.0;
   TORCH_ARG(int64_t, warmup_steps) = 1;
 };
 

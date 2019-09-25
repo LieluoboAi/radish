@@ -43,7 +43,8 @@ class TORCH_API SpanBertModelImpl : public train::LlbModel {
 
   std::tuple<Tensor, Tensor> CalcLoss(const std::vector<Tensor>& examples,
                                       const Tensor& logits,
-                                      const Tensor& target = {}) override;
+                                      const Tensor& target = {},
+                                      bool train = true) override;
 
   Tensor forward(std::vector<Tensor> inputs) override;
 

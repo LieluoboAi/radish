@@ -29,13 +29,13 @@ ABSL_FLAG(std::string, test_data_path, "spanbert_leveldb/test",
           "the test data path");
 ABSL_FLAG(std::string, logdir, "logs", "the model log dir ");
 ABSL_FLAG(int32_t, n_vocab, 32003, "The vocab number of input tokens");
-ABSL_FLAG(int32_t, max_seq_len, 200, "seq len of input ");
+ABSL_FLAG(int32_t, max_seq_len, 512, "seq len of input ");
 ABSL_FLAG(int32_t, d_word_vec, 200, "dimension of word vec ");
-ABSL_FLAG(int32_t, batch_size, 8, "batch size of trainning steps ");
-ABSL_FLAG(int32_t, eval_every, 1000,
+ABSL_FLAG(int32_t, batch_size, 400, "batch size of trainning steps ");
+ABSL_FLAG(int32_t, eval_every, 6000,
           "every X steps , evaluate once for test loss");
 ABSL_FLAG(float, learning_rate, 0.0001, "the learning rate ");
-ABSL_FLAG(int32_t, warmup_steps, 60000, "the warmup steps");
+ABSL_FLAG(int32_t, warmup_steps, 40000, "the warmup steps");
 
 int main(int argc, char* argv[]) {
   // Passing params by value does NOT work correctly.
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
   CHECK(!logdir.empty()) << "logdir should not be empty";
   radish::train::ProgressReporter reporter;
   radish::train::LlbTrainer<radish::SpanBertExampleParser,
-                            radish::SpanBertModel>
+                            radish::SpanBertModel,false,8,2>
       trainner(logdir);
   std::string trainDataPath = absl::GetFlag(FLAGS_train_data_path);
   std::string testDataPath = absl::GetFlag(FLAGS_test_data_path);
