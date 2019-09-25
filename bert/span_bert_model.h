@@ -11,6 +11,7 @@
 #pragma once
 
 #include "train/llb_model.h"
+#include "layers/layer_norm.h"
 #include "transformer/transformer_encoder.h"
 namespace radish {
 using Tensor = torch::Tensor;
@@ -50,6 +51,7 @@ class TORCH_API SpanBertModelImpl : public train::LlbModel {
 
   SpanBertOptions options;
   TransformerEncoder encoder = nullptr;
+  LayerNorm laynorm = nullptr;
   torch::nn::Linear proj = nullptr;
   torch::nn::Linear span_hidden_proj = nullptr;
 };

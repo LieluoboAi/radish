@@ -58,7 +58,7 @@ class LlbTrainer {
     spdlog::info(
         "try load test dataset into memory,  max test examples allowed to "
         "load={}....",
-        maxTestNum);
+        maxTestNum > 0 ? std::to_string(maxTestNum) : "unset");
     int ntest = 0;
     for (auto& input : *testLoader) {
       auto& ex = input[0];
@@ -90,9 +90,10 @@ class LlbTrainer {
       names.push_back(kv.key());
     }
 
-    radish::optim::RAdam radam(
-        paramters, names,
-        radish::optim::RAdamOptions(learningRate).warmup_steps(warmSteps).weight_decay(0.01));
+    radish::optim::RAdam radam(paramters, names,
+                               radish::optim::RAdamOptions(learningRate)
+                                   .warmup_steps(warmSteps)
+                                   .weight_decay(0.01));
 
     // log目录初始化
     logdir_init_(model);
