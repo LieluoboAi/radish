@@ -62,6 +62,9 @@ class LlbTrainer {
     int ntest = 0;
     for (auto& input : *testLoader) {
       auto& ex = input[0];
+      if(ex.features.empty()){
+        continue;
+      }
       testDatas.push_back(ex.features);
       testTargets.push_back(ex.target);
       ++ntest;
@@ -121,6 +124,9 @@ class LlbTrainer {
         std::vector<Tensor> batchTargets;
         for (size_t i = 0; i < inputs.size(); i++) {
           auto& ex = inputs[i];
+          if(ex.features.empty()){
+            continue;
+          }
           batchDatas.push_back(ex.features);
           batchTargets.push_back(ex.target);
         }

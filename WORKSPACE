@@ -108,11 +108,10 @@ bind(
 http_archive(
     name = "com_google_absl",
     build_file = "//third_party:absl.BUILD",
-    sha256 = "327a3883d24cf5d81954b8b8713867ecf2289092c7a39a9dc25a9947cf5b8b78",
-    strip_prefix = "abseil-cpp-aa844899c937bde5d2b24f276b59997e5b668bde",
+    sha256 = "7ce0245f27f0446dab92b849492bba85263daacaf9f34ce2fbb2831f43fd04db",
+    strip_prefix = "abseil-cpp-502efe6d7841bff82b1aeef5500491fe9a48c635",
     urls = [
-        "https://mirror.bazel.build/github.com/abseil/abseil-cpp/archive/aa844899c937bde5d2b24f276b59997e5b668bde.tar.gz",
-        "https://github.com/abseil/abseil-cpp/archive/aa844899c937bde5d2b24f276b59997e5b668bde.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/502efe6d7841bff82b1aeef5500491fe9a48c635.tar.gz",
     ],
 )
 

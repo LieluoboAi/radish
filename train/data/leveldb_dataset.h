@@ -69,7 +69,10 @@ class LeveldbDataset
     }
     radish::train::TrainExample exampleProto;
     exampleProto.ParseFromString(rawData);
-    CHECK(parser_->ParseOne(exampleProto, ret)) << "Parser example error";
+    if(!parser_->ParseOne(exampleProto, ret)){
+      spdlog::warn("Parser example error");
+      ret.features.clear();
+    }
     return ret;
   }
   torch::optional<size_t> size() const override {
