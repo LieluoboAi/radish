@@ -114,7 +114,7 @@ std::vector<Tensor> TransformerEncoderImpl::forward(const Tensor& src_seq,
     std::vector<Tensor> rets =
         elayer->forward(enc_output, non_pad_mask, slf_attn_mask);
     enc_output = rets[0];
-    const auto enc_slf_attn = rets[1];
+    const auto& enc_slf_attn = rets[1];
     if (return_attns) {
       enc_slf_attn_list.push_back(enc_slf_attn);
     }

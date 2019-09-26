@@ -53,7 +53,6 @@ std::vector<Tensor> ScaleProductAttentionImpl::forward(const Tensor& q,
   }
   attn = ::torch::softmax(attn, 2);
   attn = dropout.forward(attn);
-  const auto output = torch::bmm(attn, v);
-  return {output, attn};
+  return {torch::bmm(attn, v), attn};
 }
 }  // namespace radish

@@ -112,8 +112,8 @@ std::vector<Tensor> MultiheadAttentionImpl::forward(const Tensor& q,
 
   auto mask_ = mask.repeat({n_head, 1, 1});  // (n*b) x .. x ..
   std::vector<Tensor> rets = attention(q_, k_, v_, mask_);
-  auto output = rets[0];
-  const auto attn = rets[1];
+  auto& output = rets[0];
+  const auto& attn = rets[1];
   output = output.view({n_head, sz_b, len_q, d_v});
   output = output.permute({1, 2, 0, 3})
                .contiguous()
