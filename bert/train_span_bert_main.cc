@@ -27,7 +27,7 @@ ABSL_FLAG(std::string, train_data_path, "spanbert_leveldb/valid",
           "the train data path");
 ABSL_FLAG(std::string, test_data_path, "spanbert_leveldb/test",
           "the test data path");
-ABSL_FLAG(std::string, parser_conf_path, "parser.json",
+ABSL_FLAG(std::string, parser_conf_path, "bert/parser_conf.json",
           "the example parser conf path");
 ABSL_FLAG(std::string, logdir, "logs", "the model log dir ");
 ABSL_FLAG(int32_t, n_vocab, 32003, "The vocab number of input tokens");
