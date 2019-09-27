@@ -14,9 +14,9 @@
 #include <experimental/filesystem>
 #include <type_traits>
 
+#include "torch/data/samplers.h"
 #include "torch/nn/module.h"
 #include "torch/torch.h"
-
 #include "torch/types.h"
 
 #include "optimization/radam.h"
@@ -44,6 +44,10 @@ class LlbTrainer {
   typedef typename std::conditional<usePlainTxt, data::TxtDataset<SampleParser>,
                                     data::LeveldbDataset<SampleParser>>::type
       DatasetT;
+
+  typedef typename std::conditional<
+      usePlainTxt, torch::data::samplers::SequentialSampler,
+      torch::data::samplers::RandomSampler>::type DataSamplerT;
   /**
    *
    * 训练主代码
@@ -65,7 +69,7 @@ class LlbTrainer {
     DatasetT testDataset(testDatasetPath, parserConf);
     std::vector<std::vector<Tensor>> testDatas;
     std::vector<Tensor> testTargets;
-    auto testLoader = torch::data::make_data_loader(
+    auto testLoader = torch::data::make_data_loader<DataSamplerT>(
         std::move(testDataset),
         torch::data::DataLoaderOptions().batch_size(1).workers(1));
     spdlog::info(
@@ -126,7 +130,7 @@ class LlbTrainer {
     best_loss_ = loss_v;
     reporter->UpdateProgress(0, absl::nullopt, {loss_v}, {eval_v});
     for (int i = 0; i < epochs; i++) {
-      auto trainLoader = torch::data::make_data_loader(
+      auto trainLoader = torch::data::make_data_loader<DataSamplerT>(
           std::move(trainDataset),
           torch::data::DataLoaderOptions().batch_size(batchSize).workers(2));
 
