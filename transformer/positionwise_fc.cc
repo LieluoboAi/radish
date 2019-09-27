@@ -52,7 +52,7 @@ void PositionwiseFCImpl::pretty_print(std::ostream& stream) const {
 Tensor PositionwiseFCImpl::forward(const Tensor& input) {
   const auto residual = input;
   Tensor output = input.transpose(1, 2);
-  output = hidden2in.forward(in2hidden.forward(output).relu_());
+  output = hidden2in.forward(torch::gelu(in2hidden.forward(output)));
   output.transpose_(1, 2);
   output = dropout.forward(output);
   return layernorm.forward(output.add_(residual));

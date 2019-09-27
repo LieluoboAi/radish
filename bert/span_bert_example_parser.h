@@ -41,7 +41,7 @@ class SpanBertExampleParser : public radish::data::ExampleParser {
  private:
   bool _mask_seq(int maskId, int totalVocabSize, int len, Ex& ex);
   std::shared_ptr<sentencepiece::SentencePieceProcessor> spp_;
-  std::unique_ptr<std::mt19937> gen_;
+  std::mt19937 gen_;
 };
 
 }  // namespace radish

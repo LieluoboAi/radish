@@ -20,10 +20,7 @@ namespace radish {
 static int kMaxLen = 198;
 static int kMaxLabel = 28;
 
-SpanBertExampleParser::SpanBertExampleParser() {
-  std::random_device device;
-  gen_.reset(new std::mt19937(device()));
-}
+SpanBertExampleParser::SpanBertExampleParser() : gen_(std::random_device{}()) {}
 
 bool SpanBertExampleParser::_mask_seq(int maskId, int totalVocabSize, int len,
                                       Ex& ex) {
@@ -42,13 +39,13 @@ bool SpanBertExampleParser::_mask_seq(int maskId, int totalVocabSize, int len,
     if (num_masked >= kMaxLabel) {
       break;
     }
-    int drawLen = dist(*gen_) + 1;
+    int drawLen = dist(gen_) + 1;
     if (drawLen + num_masked > kMaxLabel) {
       continue;
     }
     if (drawLen < 4) {
       std::uniform_int_distribution<> uid(0, 5 - drawLen);
-      off += uid(*gen_);
+      off += uid(gen_);
     }
     if (off == 0) {
       continue;
@@ -78,11 +75,11 @@ bool SpanBertExampleParser::_mask_seq(int maskId, int totalVocabSize, int len,
       if (start != -1) {
         CHECK_GT(start, 0);
         int toReplace = 0;
-        float p = randomP(*gen_);
-        float p2 = randomP(*gen_);
+        float p = randomP(gen_);
+        float p2 = randomP(gen_);
         if (p > 0.8) {
           if (p2 <= 0.5) {
-            toReplace = randomId(*gen_);
+            toReplace = randomId(gen_);
           }
         } else {
           toReplace = maskId;

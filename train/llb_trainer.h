@@ -12,6 +12,7 @@
 #pragma once
 
 #include <experimental/filesystem>
+#include <type_traits>
 
 #include "torch/nn/module.h"
 #include "torch/torch.h"
@@ -20,6 +21,7 @@
 
 #include "optimization/radam.h"
 #include "train/data/leveldb_dataset.h"
+#include "train/data/txt_dataset.h"
 #include "train/model_io.h"
 #include "train/progress_reporter.h"
 #include "utils/logging.h"
@@ -31,8 +33,7 @@ using Tensor = torch::Tensor;
 namespace fs = std::experimental::filesystem;
 
 template <class SampleParser, class Model, bool use_eval_for_best_model = false,
-          int64_t maxTrackHist = 8, int64_t update_per_batches = 1,
-          int64_t max_test_load = 0>
+          int64_t maxTrackHist = 8, bool usePlainTxt = true>
 class LlbTrainer {
  public:
   LlbTrainer(std::string logdir)
@@ -40,7 +41,9 @@ class LlbTrainer {
     best_model_path_ = absl::StrCat(logdir_, "/best_model.ptc");
   }
   virtual ~LlbTrainer() {}
-
+  typedef typename std::conditional<usePlainTxt, data::TxtDataset<SampleParser>,
+                                    data::LeveldbDataset<SampleParser>>::type
+      DatasetT;
   /**
    *
    * 训练主代码
@@ -48,13 +51,23 @@ class LlbTrainer {
   void MainLoop(Model model, const std::string& trainDatasetPath,
                 const std::string& testDatasetPath, double learningRate,
                 int batchSize, int64_t evalEvery, ProgressReporter* reporter,
-                int epochs = 50, int warmSteps = 1, int64_t maxTestNum = 0) {
-    data::LeveldbDataset<SampleParser> trainDataset(trainDatasetPath);
-    data::LeveldbDataset<SampleParser> testDataset(testDatasetPath);
+                std::string parserConfPath = {}, int epochs = 50,
+                int warmSteps = 1, int64_t maxTestNum = 0,
+                int64_t updatePerBatches = 1) {
+    Json::Value parserConf;
+    if (!parserConfPath.empty()) {
+      Json::Reader reader;
+      std::ifstream ifs(parserConfPath);
+      CHECK(ifs) << "can't read " << parserConfPath << " ?";
+      CHECK(reader.parse(ifs, parserConf)) << "config file can't be parsed!";
+    }
+    DatasetT trainDataset(trainDatasetPath, parserConf);
+    DatasetT testDataset(testDatasetPath, parserConf);
     std::vector<std::vector<Tensor>> testDatas;
     std::vector<Tensor> testTargets;
     auto testLoader = torch::data::make_data_loader(
-        testDataset, torch::data::DataLoaderOptions().batch_size(1).workers(1));
+        std::move(testDataset),
+        torch::data::DataLoaderOptions().batch_size(1).workers(1));
     spdlog::info(
         "try load test dataset into memory,  max test examples allowed to "
         "load={}....",
@@ -62,7 +75,7 @@ class LlbTrainer {
     int ntest = 0;
     for (auto& input : *testLoader) {
       auto& ex = input[0];
-      if(ex.features.empty()){
+      if (ex.features.empty()) {
         continue;
       }
       testDatas.push_back(ex.features);
@@ -114,7 +127,7 @@ class LlbTrainer {
     reporter->UpdateProgress(0, absl::nullopt, {loss_v}, {eval_v});
     for (int i = 0; i < epochs; i++) {
       auto trainLoader = torch::data::make_data_loader(
-          trainDataset,
+          std::move(trainDataset),
           torch::data::DataLoaderOptions().batch_size(batchSize).workers(2));
 
       for (auto inputs : *trainLoader) {
@@ -124,7 +137,7 @@ class LlbTrainer {
         std::vector<Tensor> batchTargets;
         for (size_t i = 0; i < inputs.size(); i++) {
           auto& ex = inputs[i];
-          if(ex.features.empty()){
+          if (ex.features.empty()) {
             continue;
           }
           batchDatas.push_back(ex.features);
@@ -137,10 +150,11 @@ class LlbTrainer {
 
         Tensor logits = model->forward(examples);
         Tensor target = torch::stack({targets}, 0).to(device);
-        auto [loss, _] = model->CalcLoss(examples, logits, target);
+        auto [loss, eval] = model->CalcLoss(examples, logits, target);
+        (void)eval;
         loss.backward();
         update_batch += 1;
-        if (update_batch % update_per_batches == 0) {
+        if (update_batch % updatePerBatches == 0) {
           radam.step();
           update_batch = 0;
           radam.zero_grad();

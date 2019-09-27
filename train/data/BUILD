@@ -38,3 +38,15 @@ cc_library(
         "@com_github_google_leveldb//:leveldb",
     ],
 )
+
+cc_library(
+    name = "txt_dataset",
+    srcs = [
+        "txt_dataset.h",
+    ],
+    deps = [
+        "//third_party:pytorch",
+        "//utils:logging",
+        "@com_google_absl//absl/strings:strings",
+    ],
+)

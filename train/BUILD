@@ -49,5 +49,6 @@ cc_library(
         "//optimization:radam",
         "//third_party:pytorch",
         "//train/data:leveldb_dataset",
+        "//train/data:txt_dataset",
     ],
 )

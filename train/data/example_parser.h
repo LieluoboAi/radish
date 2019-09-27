@@ -20,8 +20,12 @@ class ExampleParser {
  public:
   virtual ~ExampleParser() {}
   virtual bool Init(const Json::Value& config) = 0;
-  virtual bool ParseOne(train::TrainExample& protoData,
-                        LlbExample& example) = 0;
+  virtual bool ParseOne(train::TrainExample& protoData, LlbExample& example) {
+    return false;
+  }
+  virtual bool ParseOne(std::string line, LlbExample& example) {
+    return false;
+  };
 };
 }  // namespace data
 

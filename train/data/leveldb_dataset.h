@@ -33,27 +33,14 @@ template <class Parser>
 class LeveldbDataset
     : public torch::data::Dataset<LeveldbDataset<Parser>, LlbExample> {
  public:
-  explicit LeveldbDataset(const std::string& path) {
+  explicit LeveldbDataset(const std::string& path, const Json::Value& conf) {
     leveldb::DB* db = nullptr;
     leveldb::Options opt;
     CHECK(leveldb::DB::Open(opt, path, &db).ok()) << "Open  db error:" << path;
     db_.reset(db);
     parser_.reset(new Parser());
-    leveldb::ReadOptions ropt;
-    std::string rawData;
-    leveldb::Status st =
-        db_->Get(ropt, leveldb::Slice(kConfigMetaKey), &rawData);
-    if (!st.ok()) {
-      spdlog::warn("no config metadata for parser!");
-    } else {
-      Json::Value conf;
-      Json::Reader reader;
-      spdlog::info("got config: {}!", rawData);
-      CHECK(reader.parse(rawData, conf))
-          << "parse from metadata conf error:" << rawData;
-      CHECK(parser_->Init(conf)) << "Init example parser error";
-      spdlog::info("init data example parser success!");
-    }
+    CHECK(parser_->Init(conf)) << "Init example parser error";
+    spdlog::info("init data example parser success!");
   }
   virtual ~LeveldbDataset() {}
 
@@ -62,14 +49,14 @@ class LeveldbDataset
     std::string rawData;
     LlbExample ret;
     leveldb::Status st =
-        db_->Get(ropt, leveldb::Slice(std::to_string(index+1)), &rawData);
+        db_->Get(ropt, leveldb::Slice(std::to_string(index + 1)), &rawData);
     if (!st.ok()) {
-      spdlog::warn("key not found:{}", index+1);
+      spdlog::warn("key not found:{}", index + 1);
       return ret;
     }
     radish::train::TrainExample exampleProto;
     exampleProto.ParseFromString(rawData);
-    if(!parser_->ParseOne(exampleProto, ret)){
+    if (!parser_->ParseOne(exampleProto, ret)) {
       spdlog::warn("Parser example error");
       ret.features.clear();
     }

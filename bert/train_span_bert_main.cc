@@ -27,6 +27,8 @@ ABSL_FLAG(std::string, train_data_path, "spanbert_leveldb/valid",
           "the train data path");
 ABSL_FLAG(std::string, test_data_path, "spanbert_leveldb/test",
           "the test data path");
+ABSL_FLAG(std::string, parser_conf_path, "parser.json",
+          "the example parser conf path");
 ABSL_FLAG(std::string, logdir, "logs", "the model log dir ");
 ABSL_FLAG(int32_t, n_vocab, 32003, "The vocab number of input tokens");
 ABSL_FLAG(int32_t, max_seq_len, 512, "seq len of input ");
@@ -46,9 +48,10 @@ int main(int argc, char* argv[]) {
       absl::GetFlag(FLAGS_d_word_vec));
   std::string logdir = absl::GetFlag(FLAGS_logdir);
   CHECK(!logdir.empty()) << "logdir should not be empty";
+  std::string parserConfPath = absl::GetFlag(FLAGS_parser_conf_path);
   radish::train::ProgressReporter reporter;
   radish::train::LlbTrainer<radish::SpanBertExampleParser,
-                            radish::SpanBertModel, false, 8, 2>
+                            radish::SpanBertModel, false, 8, false>
       trainner(logdir);
   std::string trainDataPath = absl::GetFlag(FLAGS_train_data_path);
   std::string testDataPath = absl::GetFlag(FLAGS_test_data_path);
@@ -57,7 +60,8 @@ int main(int argc, char* argv[]) {
   trainner.MainLoop(
       model, trainDataPath, testDataPath, absl::GetFlag(FLAGS_learning_rate),
       absl::GetFlag(FLAGS_batch_size), absl::GetFlag(FLAGS_eval_every),
-      &reporter, 100 /** epoch */, absl::GetFlag(FLAGS_warmup_steps),
-      absl::GetFlag(FLAGS_max_test_num));
+      &reporter, parserConfPath, 100 /** epoch */,
+      absl::GetFlag(FLAGS_warmup_steps), absl::GetFlag(FLAGS_max_test_num),
+      2 /** update per batchs */);
   return 0;
 }
