@@ -52,6 +52,21 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "albert_model",
+    srcs = [
+        "albert_model.cc",
+    ],
+    hdrs = [
+        "albert_model.h",
+    ],
+    deps = [
+        "//third_party:pytorch",
+        "//train:llb_model",
+        "//transformer:transformer_encoder",
+    ],
+)
+
 cc_binary(
     name = "train_span_bert_main",
     srcs = [
@@ -61,6 +76,23 @@ cc_binary(
     deps = [
         ":span_bert_example_parser",
         ":span_bert_model",
+        "//utils:logging",
+        "//train:llb_trainer",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+    ],
+)
+
+
+cc_binary(
+    name = "train_albert_main",
+    srcs = [
+        "train_albert_main.cc",
+    ],
+    copts = [],
+    deps = [
+        ":albert_example_parser",
+        ":albert_model",
         "//utils:logging",
         "//train:llb_trainer",
         "@com_google_absl//absl/flags:flag",

@@ -65,6 +65,11 @@ void TransformerEncoderImpl::reset() {
   register_module("pos_emb", pos_emb);
   type_emb = radish::Embedding(options.max_types_, options.d_word_vec_);
   register_module("type_emb", type_emb);
+  if (options.need_factor_embedding_) {
+    embedding_to_hidden_proj =
+        torch::nn::Linear(options.d_word_vec_, options.d_model_);
+    register_module("embedding_to_hidden_proj", embedding_to_hidden_proj);
+  }
   for (auto i = 0; i < options.n_layers_; i++) {
     auto layer = radish::EncoderLayer(options.d_model_, options.d_inner_,
                                       options.n_head_, options.d_k_,
@@ -77,6 +82,9 @@ void TransformerEncoderImpl::reset() {
   torch::nn::init::uniform_(src_word_emb->weight, -0.02, 0.02);
   torch::nn::init::uniform_(pos_emb->weight, -0.02, 0.02);
   torch::nn::init::uniform_(type_emb->weight, -0.02, 0.02);
+  if (embedding_to_hidden_proj) {
+    torch::nn::init::xavier_normal_(embedding_to_hidden_proj->weight);
+  }
 }
 
 void TransformerEncoderImpl::pretty_print(std::ostream& stream) const {
@@ -102,12 +110,14 @@ std::vector<Tensor> TransformerEncoderImpl::forward(const Tensor& src_seq,
   Tensor slf_attn_mask = get_attn_key_pad_mask(src_seq, src_seq);
   Tensor non_pad_mask = get_non_pad_mask(src_seq);
   // # -- Forward
-  Tensor enc_output =
-      src_word_emb->forward(src_seq);
-  enc_output.add_( pos_emb->forward(src_pos));
-  if (types.numel()> 0) {
+  Tensor enc_output = src_word_emb->forward(src_seq);
+  enc_output.add_(pos_emb->forward(src_pos));
+  if (types.numel() > 0) {
     CHECK_EQ(src_seq.sizes(), types.sizes());
     enc_output.add_(type_emb->forward(types));
+  }
+  if (options.need_factor_embedding_) {
+    enc_output = embedding_to_hidden_proj(enc_output);
   }
   for (auto i = 0; i < options.n_layers_; i++) {
     auto elayer = encoder_stack->ptr<EncoderLayerImpl>(i);

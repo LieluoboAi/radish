@@ -26,7 +26,8 @@ static Tensor calc_loss_(const Tensor& pred_, const Tensor& target) {
   Tensor pred = pred_.view({pred_.size(0) * pred_.size(1), -1});
   int n_class = pred.size(1);
   float lowp = 0.1 / static_cast<float>(n_class - 1);
-  float normalizing = -(0.9 * log(0.9) + float(n_class - 1) * lowp * log(lowp+1e-20));
+  float normalizing =
+      -(0.9 * log(0.9) + float(n_class - 1) * lowp * log(lowp + 1e-20));
   Tensor one_hot = torch::zeros_like(pred).scatter_(1, gold.view({-1, 1}), 1);
   one_hot.mul_(0.9 - lowp).add_(lowp);
   Tensor log_prb = torch::log_softmax(pred, 1);
@@ -65,7 +66,7 @@ SpanBertModelImpl::SpanBertModelImpl(SpanBertOptions options_)
     : options(options_) {
   encoder = TransformerEncoder(
       options.n_src_vocab_, options.len_max_seq_, options.d_word_vec_,
-      options.n_layers_, options.n_head_, options.d_k_, options.d_k_,
+      options.n_layers_, options.n_head_, options.d_k_, options.d_v_,
       options.d_model_, options.d_inner_, options.dropout_);
   register_module("transformer_encoder", encoder);
   proj = torch::nn::Linear(options.d_model_, options.n_src_vocab_);
@@ -79,27 +80,26 @@ SpanBertModelImpl::SpanBertModelImpl(SpanBertOptions options_)
   proj->weight = encoder->src_word_emb->weight;
 }
 
-std::tuple<Tensor, Tensor> SpanBertModelImpl::CalcLoss(
-    const std::vector<Tensor>& inputs, const Tensor& logits,
-    const Tensor& target, bool train) {
+Tensor SpanBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
+                                   const Tensor& logits,
+                                   std::vector<float>& evals,
+                                   const Tensor& target, bool train) {
   Tensor maskedOutput = batch_select(logits, inputs[1]);
   Tensor spanLeftOutput = batch_select(logits, inputs[2]);
   Tensor spanRightOutput = batch_select(logits, inputs[3]);
-
   Tensor maskPreds = proj(maskedOutput);
   Tensor mlm_loss = calc_loss_(maskPreds, target);
-  Tensor mlm_accuracy =
-      torch::tensor({0}, torch::TensorOptions().device(mlm_loss.device()));
-  if (!train) {
-    mlm_accuracy = calc_accuracy_(maskPreds, target);
-  }
   Tensor spanPos = encoder->pos_emb(inputs[1]);
   Tensor spanPreds = torch::cat({spanLeftOutput, spanRightOutput, spanPos}, 2);
   Tensor span_hidden = span_hidden_proj(spanPreds);
   span_hidden = laynorm(torch::gelu(span_hidden));
   spanPreds = proj(span_hidden);
   Tensor span_loss = calc_loss_(spanPreds, target);
-  return {mlm_loss.add_(span_loss), mlm_accuracy};
+  if (!train) {
+    float mlm_accuracy = calc_accuracy_(maskPreds, target).item().to<float>();
+    evals.push_back(mlm_accuracy);
+  }
+  return mlm_loss.add_(span_loss);
 }
 
 /**
@@ -112,10 +112,11 @@ std::tuple<Tensor, Tensor> SpanBertModelImpl::CalcLoss(
 Tensor SpanBertModelImpl::forward(std::vector<Tensor> inputs) {
   CHECK(inputs.size() >= 4);
   // 0 - for seq
-  Tensor src_seq = inputs[0];
+  Tensor& src_seq = inputs[0];
   auto seqLen = src_seq.size(1);
-  Tensor pos_seq =
-      torch::arange(0, seqLen, torch::TensorOptions().dtype(torch::kInt64));
+  Tensor pos_seq = torch::arange(
+      0, seqLen,
+      torch::TensorOptions().dtype(torch::kInt64).requires_grad(false));
   // should be same device as src seq
   pos_seq = pos_seq.repeat({src_seq.size(0), 1}).to(src_seq.device());
   auto rets = encoder(src_seq, pos_seq);

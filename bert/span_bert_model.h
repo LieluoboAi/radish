@@ -42,8 +42,9 @@ class TORCH_API SpanBertModelImpl : public train::LlbModel {
             SpanBertOptions(n_src_vocab, len_max_seq, d_word_vec)) {}
   explicit SpanBertModelImpl(SpanBertOptions options);
 
-  std::tuple<Tensor, Tensor> CalcLoss(const std::vector<Tensor>& examples,
+  Tensor CalcLoss(const std::vector<Tensor>& examples,
                                       const Tensor& logits,
+                                      std::vector<float>& evals,
                                       const Tensor& target = {},
                                       bool train = true) override;
 

@@ -121,14 +121,15 @@ class LlbTrainer {
     radam.zero_grad();
     int64_t steps = 0;
     int64_t update_batch = 0;
+    std::vector<float> evals;
     // first eval loss on test set
-    auto [loss_v, eval_v] =
-        _run_on_test(model, testDatas, testTargets, batchSize, device);
-    if (use_eval_for_best_model) {
-      loss_v = 0 - eval_v;
+    auto loss_v =
+        _run_on_test(model, testDatas, testTargets, batchSize, device, evals);
+    if (use_eval_for_best_model && evals.size() > 0) {
+      loss_v = 0 - evals[0];
     }
     best_loss_ = loss_v;
-    reporter->UpdateProgress(0, absl::nullopt, {loss_v}, {eval_v});
+    reporter->UpdateProgress(0, absl::nullopt, {loss_v}, evals);
     for (int i = 0; i < epochs; i++) {
       auto trainLoader = torch::data::make_data_loader<DataSamplerT>(
           std::move(trainDataset),
@@ -154,8 +155,9 @@ class LlbTrainer {
 
         Tensor logits = model->forward(examples);
         Tensor target = torch::stack({targets}, 0).to(device);
-        auto [loss, eval] = model->CalcLoss(examples, logits, target);
-        (void)eval;
+        evals.clear();
+        auto loss = model->CalcLoss(examples, logits, evals, target);
+        (void)evals;  // suppress warning
         loss.backward();
         update_batch += 1;
         if (update_batch % updatePerBatches == 0) {
@@ -165,11 +167,12 @@ class LlbTrainer {
         }
         float train_loss_v = ((Tensor)loss).item().to<float>();
         if (steps % evalEvery == 0) {
-          auto [loss_v, eval_v] =
-              _run_on_test(model, testDatas, testTargets, batchSize, device);
-          reporter->UpdateProgress(steps, train_loss_v, loss_v, eval_v);
-          if (use_eval_for_best_model) {
-            loss_v = 0 - eval_v;
+          std::vector<float> tevals;
+          auto loss_v = _run_on_test(model, testDatas, testTargets, batchSize,
+                                     device, tevals);
+          reporter->UpdateProgress(steps, train_loss_v, loss_v, tevals);
+          if (use_eval_for_best_model && tevals.size() > 0) {
+            loss_v = 0 - tevals[0];
           }
           if (loss_v < best_loss_) {
             best_loss_ = loss_v;
@@ -198,13 +201,13 @@ class LlbTrainer {
   }
 
  private:
-  std::tuple<float, float> _run_on_test(
-      Model model, const std::vector<std::vector<Tensor>>& testDatas,
-      const std::vector<Tensor>& testTargets, int batchSize,
-      torch::Device device) {
+  float _run_on_test(Model model,
+                     const std::vector<std::vector<Tensor>>& testDatas,
+                     const std::vector<Tensor>& testTargets, int batchSize,
+                     torch::Device device, std::vector<float>& evals) {
     model->eval();
     torch::NoGradGuard guard;
-    double testLoss = 0, evalValue = 0;
+    float testLoss = 0;
     size_t nbatch = (testDatas.size() - 1) / batchSize;
     for (size_t b = 0; b < nbatch; b++) {
       size_t off = b * batchSize;
@@ -219,14 +222,22 @@ class LlbTrainer {
                           device);
       Tensor target = torch::stack({targets}, 0).to(device);
       Tensor logits = model->forward(examples);
-      auto [tloss, teval] = model->CalcLoss(examples, logits, target, false);
+      std::vector<float> tevals;
+      auto tloss = model->CalcLoss(examples, logits, tevals, target, false);
       float tlv = ((Tensor)tloss).item().to<float>();
-      float tev = ((Tensor)teval).item().to<float>();
       testLoss += tlv;
-      evalValue += tev;
+      if (evals.empty()) {
+        evals.resize(tevals.size());
+        std::fill(evals.begin(), evals.end(), 0);
+      }
+      for (size_t i = 0; i < tevals.size(); i++) {
+        evals[i] += tevals[i];
+      }
     }
-    return {testLoss / static_cast<float>(nbatch + 0.00001),
-            evalValue / static_cast<float>(nbatch + 0.00001)};
+    for (size_t i = 0; i < evals.size(); i++) {
+      evals[i] /= static_cast<float>(nbatch + 0.00001);
+    }
+    return testLoss / static_cast<float>(nbatch + 0.00001);
   }
   void _prepare_bacth_data(const std::vector<std::vector<Tensor>>& testDatas,
                            const std::vector<Tensor>& testTargets, size_t off,

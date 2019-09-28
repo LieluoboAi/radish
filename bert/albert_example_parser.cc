@@ -142,29 +142,30 @@ bool ALBertExampleParser::ParseOne(std::string line,
   if (ex.ordered) {
     for (int i = off; i < mid; i++) {
       ex.x[k] = ids[i];
+      ex.types[k] = 1;
       k += 1;
     }
-    ex.a_len_ = k;
+    ex.types[k] = 1;
     ex.x[k] = sepId;
     k += 1;
     for (int i = mid; i < end; i++) {
       ex.x[k] = ids[i];
+      ex.types[k] = 2;
       k += 1;
     }
-    ex.t_len_ = k;
   } else {
     for (int i = mid; i < end; i++) {
       ex.x[k] = ids[i];
+      ex.types[k] = 1;
       k += 1;
     }
-    ex.a_len_ = k;
     ex.x[k] = sepId;
     k += 1;
     for (int i = off; i < mid; i++) {
       ex.x[k] = ids[i];
+      ex.types[k] = 1;
       k += 1;
     }
-    ex.t_len_ = k;
   }
 
   if (!_mask_seq(maskId, sepId, totalVocabSize, k, ex)) {
@@ -176,11 +177,9 @@ bool ALBertExampleParser::ParseOne(std::string line,
   example.features.push_back(torch::tensor(
       ex.indexies, at::dtype(torch::kInt64).requires_grad(false)));
   example.features.push_back(
-      torch::tensor(ex.a_len_, at::dtype(torch::kInt64).requires_grad(false)));
+      torch::tensor(ex.types, at::dtype(torch::kInt64).requires_grad(false)));
   example.features.push_back(
-      torch::tensor(ex.t_len_, at::dtype(torch::kInt64).requires_grad(false)));
-  example.features.push_back(
-      torch::tensor(ex.ordered, at::dtype(torch::kInt32).requires_grad(false)));
+      torch::tensor(ex.ordered, at::dtype(torch::kInt64).requires_grad(false)));
   example.target =
       torch::tensor(ex.target, at::dtype(torch::kInt64).requires_grad(false));
   return true;

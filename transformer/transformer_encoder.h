@@ -42,6 +42,7 @@ struct TORCH_API TransformerEncoderOptions {
   TORCH_ARG(int64_t, d_v);
   TORCH_ARG(int64_t, d_model);
   TORCH_ARG(int64_t, d_inner);
+  TORCH_ARG(bool, need_factor_embedding) = false;
   TORCH_ARG(double, dropout) = 0.1;
   TORCH_ARG(int64_t, max_types) = 32;
 };
@@ -71,6 +72,7 @@ class TORCH_API TransformerEncoderImpl
   radish::Embedding src_word_emb = nullptr;
   radish::Embedding pos_emb = nullptr;
   radish::Embedding type_emb = nullptr;
+  torch::nn::Linear embedding_to_hidden_proj = nullptr;
   torch::nn::ModuleList encoder_stack = {};
 };
 

@@ -22,10 +22,9 @@ namespace radish {
 // 200 -1
 
 struct Ex {
-  explicit Ex(int maxLen) : x(maxLen, 0) {}
+  explicit Ex(int maxLen) : x(maxLen, 0), types(maxLen,0) {}
   std::vector<int> x;
-  int a_len_;
-  int t_len_;
+  std::vector<int> types;
   std::vector<int> target;
   std::vector<int> indexies;
   // 是否有序的

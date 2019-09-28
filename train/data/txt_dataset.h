@@ -17,25 +17,22 @@
 #include <random>
 #include <string>
 
+#include "absl/strings/str_split.h"
 #include "torch/torch.h"
 #include "torch/types.h"
 #include "train/data/example_parser.h"
 #include "train/data/llb_example.h"
 #include "utils/logging.h"
-
 namespace radish {
 namespace data {
 
 class TxtFile {
  public:
-  TxtFile(std::string path) : infile_(path), path_(path) { CHECK(infile_); }
+  TxtFile(std::string path) : infile_(path), path_(path) {
+    CHECK(infile_) << path;
+  }
   ~TxtFile() { infile_.close(); }
   bool NextLine(std::string& line) { return bool(std::getline(infile_, line)); }
-  void Reset() {
-    infile_.close();
-    infile_ = std::ifstream(path_);
-    CHECK(infile_);
-  }
 
  private:
   std::ifstream infile_;
@@ -44,22 +41,21 @@ class TxtFile {
 template <class Parser>
 class TxtDataset : public torch::data::Dataset<TxtDataset<Parser>, LlbExample> {
  public:
-  explicit TxtDataset(std::vector<std::string> pathList,
-                      const Json::Value& parserConf)
+  explicit TxtDataset(std::string pathstr, const Json::Value& parserConf)
       : gen_(std::random_device{}()) {
     parser_.reset(new Parser());
     CHECK(parser_->Init(parserConf));
+    std::vector<std::string> pathList = absl::StrSplit(pathstr, ",");
     CHECK(pathList.size() < kMaxFiles)
         << "path number should be less than :" << kMaxFiles;
     total_ = 0;
     for (size_t i = 0; i < pathList.size(); i++) {
-      auto txtf = std::make_shared<TxtFile>(pathList[i]);
+      TxtFile txt(pathList[i]);
       std::string line;
-      while (txtf->NextLine(line)) {
+      while (txt.NextLine(line)) {
         total_ += 1;
       }
-      txtf->Reset();
-      file_lists_.push_back(txtf);
+      file_lists_.push_back(std::make_shared<TxtFile>(pathList[i]));
       read_inds_.push_back(i);
     }
     spdlog::info("total {} records", total_);
@@ -72,7 +68,7 @@ class TxtDataset : public torch::data::Dataset<TxtDataset<Parser>, LlbExample> {
     bool gotIdx = false;
     std::string rawData;
     while (!gotIdx && !read_inds_.empty()) {
-      std::uniform_int_distribution<size_t> rng(0, read_inds_.size());
+      std::uniform_int_distribution<size_t> rng(0, read_inds_.size()-1);
       idx = rng(gen_);
       if (file_lists_[idx]->NextLine(rawData)) {
         gotIdx = true;
