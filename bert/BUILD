@@ -19,6 +19,24 @@ cc_library(
     ],
 )
 
+
+cc_library(
+    name = "albert_example_parser",
+    srcs = [
+        "albert_example_parser.cc",
+    ],
+    hdrs = [
+        "albert_example_parser.h",
+    ],
+    deps = [
+        "//third_party:pytorch",
+        "//train/data:example_parser",
+       "//utils:logging",
+        "@sentencepiece//sentencepiece:error",
+        "@sentencepiece//sentencepiece:sentencepiece_processor",
+    ],
+)
+
 cc_library(
     name = "span_bert_model",
     srcs = [
