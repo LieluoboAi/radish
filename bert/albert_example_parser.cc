@@ -52,7 +52,7 @@ bool ALBertExampleParser::_mask_seq(int maskId, int sepId, int totalVocabSize,
     }
     bool valid = true;
     for (int i = 0; i < drawLen; i++) {
-      if (masked[i + off] || ex.x[i + off] == sepId || (i + off) >= len) {
+      if ((i + off) >= len || masked[i + off] || ex.x[i + off] == sepId) {
         valid = false;
         break;
       }
