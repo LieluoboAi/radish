@@ -27,8 +27,8 @@ struct Ex {
   std::vector<int> types;
   std::vector<int> target;
   std::vector<int> indexies;
-  // 是否有序的
-  bool ordered;
+  // 是否有序的, 0 乱序， 1，有序
+  int ordered;
 };
 using Tensor = torch::Tensor;
 class ALBertExampleParser : public radish::data::ExampleParser {

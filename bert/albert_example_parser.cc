@@ -124,9 +124,9 @@ bool ALBertExampleParser::ParseOne(std::string line,
   }
   ex.x[0] = clsId;
   if (random_p_dist_(gen_) <= 0.5) {
-    ex.ordered = true;
+    ex.ordered = 1;
   } else {
-    ex.ordered = false;
+    ex.ordered = 0;
   }
   int total = ids.size();
   int off = 0;
@@ -159,11 +159,12 @@ bool ALBertExampleParser::ParseOne(std::string line,
       ex.types[k] = 1;
       k += 1;
     }
+    ex.types[k] = 1;
     ex.x[k] = sepId;
     k += 1;
     for (int i = off; i < mid; i++) {
       ex.x[k] = ids[i];
-      ex.types[k] = 1;
+      ex.types[k] = 2;
       k += 1;
     }
   }
