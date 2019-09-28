@@ -19,7 +19,7 @@ Radish可以让你的模型从训练到部署都使用相同C++代码库， 借�
 1) 派生自radish::LlbModel类， 实现对应forward过程，以及计算loss的逻辑
 2) 决定你的样本特征，以及对应target
 3) 实现radish::data::ExampleParser , 根据需要实现对应解析方法
-4) 借助radish::train::LlbTrainer 指定对应模板参数，函数参数训练模型
+4) 借助radish:: train ::LlbTrainer 指定对应模板参数，函数参数训练模型
 5) ....
    
    可参考bert目录下spanbert以及albert示例。
@@ -34,4 +34,7 @@ Radish可以让你的模型从训练到部署都使用相同C++代码库， 借�
 #  数据载入
 
 你可以使用2种数据格式，一种是基于leveldb, 另一种基于纯文本（一行一个样本)
+基于leveldb的支持完全随机访问， 基于txt的支持多文件输入，每次随机从某文件读入数据
+
+
 
