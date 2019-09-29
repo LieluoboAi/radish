@@ -80,9 +80,9 @@ ALBertModelImpl::ALBertModelImpl(ALBertOptions options_) : options(options_) {
   laynorm = LayerNorm(options.d_model_);
   register_module("laynorm", laynorm);
   torch::NoGradGuard guard;
+  proj->weight = encoder->embedding_to_hidden_proj->weight.t();
   vocab_proj->weight = encoder->src_word_emb->weight;
   torch::nn::init::xavier_normal_(order_proj->weight);
-  torch::nn::init::xavier_normal_(proj->weight);
 }
 
 Tensor ALBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
