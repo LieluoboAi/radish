@@ -66,8 +66,9 @@ void TransformerEncoderImpl::reset() {
   type_emb = radish::Embedding(options.max_types_, options.d_word_vec_);
   register_module("type_emb", type_emb);
   if (options.need_factor_embedding_) {
-    embedding_to_hidden_proj =
-        torch::nn::Linear(options.d_word_vec_, options.d_model_);
+    embedding_to_hidden_proj = torch::nn::Linear(
+        torch::nn::LinearOptions(options.d_word_vec_, options.d_model_)
+            .with_bias(false));
     register_module("embedding_to_hidden_proj", embedding_to_hidden_proj);
   }
   for (auto i = 0; i < options.n_layers_; i++) {

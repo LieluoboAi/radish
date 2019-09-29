@@ -71,8 +71,6 @@ ALBertModelImpl::ALBertModelImpl(ALBertOptions options_) : options(options_) {
           options.d_model_, options.d_inner_, options.dropout_)
           .need_factor_embedding(true));
   register_module("transformer_encoder", encoder);
-  proj = torch::nn::Linear(options.d_model_, options.d_word_vec_);
-  register_module("factor_proj", proj);
   vocab_proj = torch::nn::Linear(options.d_word_vec_, options.n_src_vocab_);
   register_module("vocab_proj", vocab_proj);
   order_proj = torch::nn::Linear(options.d_model_, 2);
@@ -80,7 +78,6 @@ ALBertModelImpl::ALBertModelImpl(ALBertOptions options_) : options(options_) {
   laynorm = LayerNorm(options.d_model_);
   register_module("laynorm", laynorm);
   torch::NoGradGuard guard;
-  proj->weight = encoder->embedding_to_hidden_proj->weight.t();
   vocab_proj->weight = encoder->src_word_emb->weight;
   torch::nn::init::xavier_normal_(order_proj->weight);
 }
@@ -90,7 +87,13 @@ Tensor ALBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
                                  std::vector<float>& evals,
                                  const Tensor& target, bool train) {
   Tensor maskedOutput = batch_select(logits, inputs[1]);
-  Tensor maskPreds = vocab_proj(proj(maskedOutput));
+  int bsz = maskedOutput.size(0);
+  int numTargets = maskedOutput.size(1);
+  int hidden = maskedOutput.size(2);
+  Tensor maskPreds =
+      vocab_proj(maskedOutput.view({-1, hidden})
+                     .mm(encoder->embedding_to_hidden_proj->weight)
+                     .view({bsz, numTargets, -1}));
   Tensor mlm_loss = calc_loss_(maskPreds, target, true);
   if (!train) {
     float mlm_accuracy =

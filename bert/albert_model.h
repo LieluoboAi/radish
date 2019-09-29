@@ -40,7 +40,6 @@ class TORCH_API ALBertModelImpl : public train::LlbModel {
   ALBertOptions options;
   TransformerEncoder encoder = nullptr;
   LayerNorm laynorm = nullptr;
-  torch::nn::Linear proj = nullptr;
   torch::nn::Linear vocab_proj = nullptr;
   torch::nn::Linear order_proj = nullptr;
 };
