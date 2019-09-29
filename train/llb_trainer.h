@@ -65,7 +65,6 @@ class LlbTrainer {
       CHECK(ifs) << "can't read " << parserConfPath << " ?";
       CHECK(reader.parse(ifs, parserConf)) << "config file can't be parsed!";
     }
-    DatasetT trainDataset(trainDatasetPath, parserConf);
     DatasetT testDataset(testDatasetPath, parserConf);
     std::vector<std::vector<Tensor>> testDatas;
     std::vector<Tensor> testTargets;
@@ -132,9 +131,9 @@ class LlbTrainer {
     reporter->UpdateProgress(0, absl::nullopt, {loss_v}, evals);
     for (int i = 0; i < epochs; i++) {
       auto trainLoader = torch::data::make_data_loader<DataSamplerT>(
-          std::move(trainDataset),
+          std::move(DatasetT(trainDatasetPath, parserConf)),
           torch::data::DataLoaderOptions().batch_size(batchSize).workers(2));
-
+      spdlog::info("start epoch:{}", i);
       for (auto inputs : *trainLoader) {
         model->train();
         std::vector<std::vector<Tensor>> batchDatas;
@@ -200,6 +199,7 @@ class LlbTrainer {
       update_batch = 0;
       radam.zero_grad();
     }
+    spdlog::info("done trainning....");
   }
 
  private:

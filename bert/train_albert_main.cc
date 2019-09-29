@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
   std::string parserConfPath = absl::GetFlag(FLAGS_parser_conf_path);
   radish::train::ProgressReporter reporter;
   radish::train::LlbTrainer<radish::ALBertExampleParser, radish::ALBertModel,
-                            false, 8, true>
+                            false, 10, true>
       trainner(logdir);
   std::string trainDataPath = absl::GetFlag(FLAGS_train_data_path);
   std::string testDataPath = absl::GetFlag(FLAGS_test_data_path);
