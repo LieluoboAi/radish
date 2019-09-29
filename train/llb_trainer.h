@@ -136,7 +136,6 @@ class LlbTrainer {
           torch::data::DataLoaderOptions().batch_size(batchSize).workers(2));
 
       for (auto inputs : *trainLoader) {
-        steps += 1;
         model->train();
         std::vector<std::vector<Tensor>> batchDatas;
         std::vector<Tensor> batchTargets;
@@ -152,7 +151,10 @@ class LlbTrainer {
         std::vector<Tensor> targets;
         _prepare_bacth_data(batchDatas, batchTargets, 0, batchDatas.size(),
                             examples, targets, device);
-
+        if(examples.empty()){
+          continue;
+        }
+        steps += 1;
         Tensor logits = model->forward(examples);
         Tensor target = torch::stack({targets}, 0).to(device);
         evals.clear();
@@ -208,7 +210,8 @@ class LlbTrainer {
     model->eval();
     torch::NoGradGuard guard;
     float testLoss = 0;
-    size_t nbatch = (testDatas.size() - 1) / batchSize;
+    size_t nbatch = (testDatas.size() - 1) / batchSize + 1;
+    size_t actBatch = 0;
     for (size_t b = 0; b < nbatch; b++) {
       size_t off = b * batchSize;
       // 不包含
@@ -220,6 +223,10 @@ class LlbTrainer {
       std::vector<Tensor> targets;
       _prepare_bacth_data(testDatas, testTargets, off, end, examples, targets,
                           device);
+      if (examples.empty()) {
+        continue;
+      }
+      actBatch += 1;
       Tensor target = torch::stack({targets}, 0).to(device);
       Tensor logits = model->forward(examples);
       std::vector<float> tevals;
@@ -235,9 +242,9 @@ class LlbTrainer {
       }
     }
     for (size_t i = 0; i < evals.size(); i++) {
-      evals[i] /= static_cast<float>(nbatch + 0.00001);
+      evals[i] /= static_cast<float>(actBatch + 0.00001);
     }
-    return testLoss / static_cast<float>(nbatch + 0.00001);
+    return testLoss / static_cast<float>(actBatch + 0.00001);
   }
   void _prepare_bacth_data(const std::vector<std::vector<Tensor>>& testDatas,
                            const std::vector<Tensor>& testTargets, size_t off,

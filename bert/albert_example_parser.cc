@@ -22,7 +22,7 @@ static int kMaxLabel = 28;
 
 ALBertExampleParser::ALBertExampleParser()
     : gen_(std::random_device{}()),
-      len_dist_({12, 6, 4, 3}),
+      len_dist_({36, 9, 4}),
       random_p_dist_(0, 1) {}
 
 bool ALBertExampleParser::_mask_seq(int maskId, int sepId, int totalVocabSize,
