@@ -29,17 +29,36 @@ Radish可以让你的模型从训练到部署都使用相同C++代码库， 借�
    
    可参考bert目录下spanbert以及albert示例。
 
-# 关于ALBERT
-
-论文给出的实验报告，可以看出主要是hidden size在起作用， 共享参数反而使得效果打折扣。
-所以本示例实现没有加入参数共享。可自行更改对应代码， 也欢迎pull request.
-
-
 
 #  数据载入
 
 你可以使用2种数据格式，一种是基于leveldb, 另一种基于纯文本（一行一个样本)
 基于leveldb的支持完全随机访问， 基于txt的支持多文件输入，每次随机从某文件读入数据
+
+
+
+# 关于ALBERT
+
+样本格式： TXT格式，一行一个样本，把换行换成\t或者空格
+
+运行训练（示例）：
+
+```bash
+LD_LIBRARY_PATH=/data/chenyw/libtorch_gpu/lib ./train_albert_main --train_data_path /data/chenyw/albert/data/part0,/data/chenyw/albert/data/part1  --test_data_path /data/chenyw/albert/data/valid0  --warmup_steps 10000 --parser_conf_path parser_conf.json --eval_every 5000 -learning_rate 0.0003 --batch_size 460
+```
+更多参数可运行加--help参数打印出来参考
+
+论文给出的实验报告，可以看出主要是hidden size在起作用， 共享参数反而使得效果打折扣。
+所以本示例实现没有加入参数共享。可自行更改对应代码， 也欢迎pull request.
+
+
+# 参考
+
+1)  [Pytorch C++ Doc](https://pytorch.org/cppdocs/ "Pytorch Cpp doc")
+2)  [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](https://arxiv.org/abs/1810.04805 "BERT Paper")
+3)  [ALBERT: A Lite BERT for Self-supervised Learning of Language Representations](https://openreview.net/forum?id=H1eA7AEtvS "ALBert Paper")
+4)  [SpanBERT: Improving Pre-training by Representing and Predicting Spans](https://arxiv.org/abs/1907.10529 "SpanBert Paper")
+
 
 
 
