@@ -75,7 +75,7 @@ ALBertModelImpl::ALBertModelImpl(ALBertOptions options_) : options(options_) {
   register_module("vocab_proj", vocab_proj);
   order_proj = torch::nn::Linear(options.d_model_, 2);
   register_module("order_proj", order_proj);
-  laynorm = LayerNorm(options.d_model_);
+  laynorm = LayerNorm(options.d_word_vec_);
   register_module("laynorm", laynorm);
   torch::NoGradGuard guard;
   vocab_proj->weight = encoder->src_word_emb->weight;
@@ -90,10 +90,11 @@ Tensor ALBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
   int bsz = maskedOutput.size(0);
   int numTargets = maskedOutput.size(1);
   int hidden = maskedOutput.size(2);
-  Tensor maskPreds =
-      vocab_proj(maskedOutput.view({-1, hidden})
-                     .mm(encoder->embedding_to_hidden_proj->weight)
-                     .view({bsz, numTargets, -1}));
+  Tensor maskPreds = maskedOutput.view({-1, hidden})
+                         .mm(encoder->embedding_to_hidden_proj->weight)
+                         .view({bsz, numTargets, -1});
+  maskPreds = laynorm(maskPreds);
+  maskPreds = vocab_proj(maskPreds);
   Tensor mlm_loss = calc_loss_(maskPreds, target, true);
   if (!train) {
     float mlm_accuracy =
@@ -102,7 +103,7 @@ Tensor ALBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
   }
 
   Tensor firstTokenRepr = logits.select(1, 0);
-  Tensor orderPreds = order_proj(firstTokenRepr.detach());
+  Tensor orderPreds = order_proj(firstTokenRepr);
   //  inputs[3] is the ordered target
   Tensor order_loss = calc_loss_(orderPreds, inputs[3], false);
   if (!train) {
@@ -129,7 +130,7 @@ Tensor ALBertModelImpl::forward(std::vector<Tensor> inputs) {
       0, seqLen,
       torch::TensorOptions().dtype(torch::kInt64).requires_grad(false));
   // should be same device as src seq
-  pos_seq = pos_seq.detach_().repeat({src_seq.size(0), 1}).to(src_seq.device());
+  pos_seq = pos_seq.repeat({src_seq.size(0), 1}).to(src_seq.device());
 
   // types
   Tensor& types = inputs[2];

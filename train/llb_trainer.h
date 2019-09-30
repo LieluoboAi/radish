@@ -19,7 +19,9 @@
 #include "torch/torch.h"
 #include "torch/types.h"
 
+#include "optimization/lamb.h"
 #include "optimization/radam.h"
+#include "torch/optim/adam.h"
 #include "train/data/leveldb_dataset.h"
 #include "train/data/txt_dataset.h"
 #include "train/model_io.h"
@@ -150,7 +152,7 @@ class LlbTrainer {
         std::vector<Tensor> targets;
         _prepare_bacth_data(batchDatas, batchTargets, 0, batchDatas.size(),
                             examples, targets, device);
-        if(examples.empty()){
+        if (examples.empty()) {
           continue;
         }
         steps += 1;

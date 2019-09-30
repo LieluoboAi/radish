@@ -13,6 +13,7 @@
 
 #include "torch/torch.h"
 
+#include "optimization/lamb.h"
 #include "optimization/radam.h"
 
 using namespace torch;  // NOLINT
@@ -84,8 +85,7 @@ int main() {
     paramters.push_back(kv.value());
     names.push_back(kv.key());
   }
-  radish::optim::RAdam optim(paramters, names,
-                             radish::optim::RAdamOptions(1e-3));
+  radish::optim::Lamb optim(paramters, names, radish::optim::LambOptions(1e-3));
 
   model->train();
   model->to(device);

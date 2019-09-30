@@ -47,6 +47,7 @@ cc_library(
         ":model_io",
         "//utils:logging",
         "//optimization:radam",
+        "//optimization:lamb",
         "//third_party:pytorch",
         "//train/data:leveldb_dataset",
         "//train/data:txt_dataset",

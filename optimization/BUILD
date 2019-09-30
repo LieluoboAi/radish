@@ -22,6 +22,22 @@ cc_binary(
     srcs = ["test_radam.cc"],
     copts = [],
     deps = [
+        ":lamb",
         ":radam",
+    ],
+)
+
+cc_library(
+    name = "lamb",
+    srcs = [
+        "lamb.cc",
+    ],
+    hdrs = [
+        "lamb.h",
+    ],
+    deps = [
+        "//utils:logging",
+        "//utils:tensor_util",
+        "@com_google_absl//absl/strings",
     ],
 )
