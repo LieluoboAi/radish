@@ -41,6 +41,7 @@ class ALBertExampleParser : public radish::data::ExampleParser {
 
  private:
   bool _mask_seq(int maskId, int seqId, int totalVocabSize, int len, Ex& ex);
+  void _select_a_b_ids(std::vector<int>& aids, std::vector<int>& bids);
   std::shared_ptr<sentencepiece::SentencePieceProcessor> spp_;
   std::mt19937 gen_;
   std::discrete_distribution<> len_dist_;

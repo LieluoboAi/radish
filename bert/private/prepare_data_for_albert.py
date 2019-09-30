@@ -11,7 +11,7 @@
 
 import fire
 import json
-
+import re
 def _preprocess_line(desc):
   seeSp =False
   ret=""
@@ -25,10 +25,11 @@ def _preprocess_line(desc):
       ret+=desc[i]
   return ret
     
-def  cleanData(inputPath, outputPath, minLen=80):
+def  cleanData(inputPath, outputPath, minLen=40):
   outp=open(outputPath,"w")
   total =0
   skip =0
+  p = re.compile("。|，|？")
   with open(inputPath,"r", encoding="utf8") as inp:
     for line in inp:
       line=line.strip()
@@ -46,15 +47,25 @@ def  cleanData(inputPath, outputPath, minLen=80):
       if len(desc) < minLen:
         skip +=1
         continue
-      desc = desc.replace("<br/>","\t")
-      desc = desc.replace("\r","\t")
-      desc = desc.replace("\n","\t")
-      desc = desc.replace("\t\t","\t")
+      desc = desc.replace("<br/>"," ")
+      desc = desc.replace("\r"," ")
+      desc = desc.replace("\n"," ")
+      desc = desc.replace("\t"," ")
       desc = _preprocess_line(desc)
       if len(desc) < minLen:
         skip +=1
         continue
-      outp.write("%s\n"%(desc))
+      lns= p.split(desc)
+      if len(lns)<=1:
+        skip +=1
+        continue
+      if len(lns)==2 and (len(lns[0])<25 or len(lns[1])<25):
+        skip +=1
+        continue
+      if len(lns)==3 and (len(lns[0])<25 or len(lns[1])<25 or len(lns[2])<25):
+        skip +=1
+        continue
+      outp.write("%s\n"%("\t".join(lns)))
   outp.close()
   print("processed %d, skiped :%d"%(total, skip))
   
