@@ -117,10 +117,6 @@ bool ALBertExampleParser::ParseOne(std::string line,
   int clsId = totalVocabSize;
   int maskId = totalVocabSize + 1;
   int sepId = totalVocabSize + 2;
-  if (ids.size() < 10) {
-    spdlog::warn("too short to be an example:{}", ids.size());
-    return false;
-  }
   ex.x[0] = clsId;
   if (random_p_dist_(gen_) <= 0.5) {
     ex.ordered = 1;
@@ -128,15 +124,19 @@ bool ALBertExampleParser::ParseOne(std::string line,
     ex.ordered = 0;
   }
   int total = ids.size();
-  int off = 0;
-  int mid = total / 2;
+  std::discrete_distribution<> ranoff_p(0, 3);
+  int off = ranoff_p(gen_);
   int end = total;
-  if (total > kMaxLen - 2) {
-    std::discrete_distribution<> ranoff_p(0, total - kMaxLen);
-    off += ranoff_p(gen_);
-    mid = off + kMaxLen / 2 - 1;
-    end = off + kMaxLen - 2;
+  if ((end - off) > kMaxLen - 1) {
+    end = off + kMaxLen - 1;
   }
+  int thirdthLen = (end - off) / 3;
+  if (thirdthLen < 5) {
+    spdlog::warn("too short to be an example:{}, text=[{}]", end - off, x);
+    return false;
+  }
+  std::discrete_distribution<> ranmid_p(thirdthLen, 2 * thirdthLen - 1);
+  int mid = ranmid_p(gen_);
   int k = 1;
   if (ex.ordered) {
     for (int i = off; i < mid; i++) {
@@ -147,13 +147,14 @@ bool ALBertExampleParser::ParseOne(std::string line,
     ex.types[k] = 1;
     ex.x[k] = sepId;
     k += 1;
-    for (int i = mid; i < end; i++) {
+    // mid has place SEP
+    for (int i = mid + 1; i < end; i++) {
       ex.x[k] = ids[i];
       ex.types[k] = 2;
       k += 1;
     }
   } else {
-    for (int i = mid; i < end; i++) {
+    for (int i = mid + 1; i < end; i++) {
       ex.x[k] = ids[i];
       ex.types[k] = 1;
       k += 1;
@@ -167,7 +168,6 @@ bool ALBertExampleParser::ParseOne(std::string line,
       k += 1;
     }
   }
-
   if (!_mask_seq(maskId, sepId, totalVocabSize, k, ex)) {
     spdlog::warn("mask example error");
     return false;
