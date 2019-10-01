@@ -1,0 +1,23 @@
+matrix:
+  include:
+    - language: generic
+      env:
+        - BAZEL_URL="https://github.com/bazelbuild/bazel/releases/download/0.28.1/bazel-0.28.1-installer-linux-x86_64.sh"
+      before_install:
+        # Install Bazel
+        - |
+          wget -O install.sh "${BAZEL_URL}"
+          chmod +x install.sh
+          ./install.sh --user
+          rm -f install.sh
+
+      script:
+        # build train albert and span bert
+        - cd $TRAVIS_BUILD_DIR
+        - |
+          bazel --host_jvm_args=-Xmx500m --host_jvm_args=-Xms500m \
+           build --noshow_progress --noshow_loading_progress  --batch  //bert:train_albert_main
+        - |
+          bazel --host_jvm_args=-Xmx500m --host_jvm_args=-Xms500m \
+           build --noshow_progress --noshow_loading_progress  --batch  //bert:train_span_bert_main
+ 
