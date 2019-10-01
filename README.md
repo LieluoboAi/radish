@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/LieluoboAi/radish.png?branch=master)](https://travis-ci.org/LieluoboAi/radish)
+
 # Radish
 Radish可以让你的模型从训练到部署都使用相同C++代码库， 借助libtorch, 让你专注实现模型及对应数据处理。
 
