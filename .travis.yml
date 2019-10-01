@@ -1,5 +1,17 @@
 matrix:
   include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+      before_install:
+        - eval "${MATRIX_EVAL}"
+        
     - language: generic
       env:
         - BAZEL_URL="https://github.com/bazelbuild/bazel/releases/download/0.28.1/bazel-0.28.1-installer-linux-x86_64.sh"
