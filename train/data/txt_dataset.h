@@ -92,7 +92,7 @@ class TxtDataset : public torch::data::Dataset<TxtDataset<Parser>, LlbExample> {
   std::vector<size_t> read_inds_;
   size_t total_;
   std::mt19937 gen_;
-  inline static const size_t kMaxFiles = 128;
+  static const size_t kMaxFiles = 128;
 };
 
 }  // namespace data
