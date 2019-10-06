@@ -53,5 +53,33 @@ void LoadModel(std::shared_ptr<torch::nn::Module> module,
     }
   }
 }
+
+void LoadModelEx(std::shared_ptr<torch::nn::Module> module,
+                 const std::string& path, const std::string& prefixVarName) {
+  torch::serialize::InputArchive archive;
+  archive.load_from(path);
+  torch::NoGradGuard no_grad;
+  auto params = module->named_parameters(true /*recurse*/);
+  auto buffers = module->named_buffers(true /*recurse*/);
+  for (auto& val : params) {
+    std::string kn = val.key();
+    if (prefixVarName.empty() || (kn.size() >= prefixVarName.size() &&
+                                  strncmp(kn.c_str(), prefixVarName.c_str(),
+                                          prefixVarName.size()) == 0)) {
+      archive.read(kn, val.value());
+      spdlog::info("load pretrained weights:{}", kn);
+    }
+  }
+  for (auto& val : buffers) {
+    std::string kn = val.key();
+    if (prefixVarName.empty() || (kn.size() >= prefixVarName.size() &&
+                                  strncmp(kn.c_str(), prefixVarName.c_str(),
+                                          prefixVarName.size()) == 0)) {
+      archive.read(val.key(), val.value(), /*is_buffer*/ true);
+      spdlog::info("load pretrained buffer:{}", kn);
+    }
+  }
+}
+
 }  // namespace train
 }  // namespace radish

@@ -22,5 +22,9 @@ void SaveModel(std::shared_ptr<torch::nn::Module> module,
 void LoadModel(std::shared_ptr<torch::nn::Module> module,
                const std::string& file_name,
                const std::string& ignore_name_regex = "");
+
+void LoadModelEx(std::shared_ptr<torch::nn::Module> module,
+               const std::string& file_name,
+               const std::string& prefixVarName = "");
 }  // namespace train
 }  // namespace  radish

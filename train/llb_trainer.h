@@ -59,7 +59,9 @@ class LlbTrainer {
                 int batchSize, int64_t evalEvery, ProgressReporter* reporter,
                 std::string parserConfPath = {}, int epochs = 50,
                 int warmSteps = 1, int64_t maxTestNum = 0,
-                int64_t updatePerBatches = 1) {
+                int64_t updatePerBatches = 1,
+                std::string pretrainModelPath = "",
+                std::string pretrainPrefixVarName = "") {
     Json::Value parserConf;
     if (!parserConfPath.empty()) {
       Json::Reader reader;
@@ -116,8 +118,12 @@ class LlbTrainer {
                                    .warmup_steps(warmSteps)
                                    .weight_decay(0.01));
 
+    // radish::optim::Lamb radam(
+    //     paramters, names,
+    //     radish::optim::LambOptions(learningRate).weight_decay(0.01));
+
     // log目录初始化
-    logdir_init_(model);
+    logdir_init_(model, pretrainModelPath, pretrainPrefixVarName);
     model->to(device);
     radam.zero_grad();
     int64_t steps = 0;
@@ -271,11 +277,17 @@ class LlbTrainer {
     }
   }
 
-  bool logdir_init_(Model model) {
+  bool logdir_init_(Model model, std::string pretrainModelPath,
+                    std::string pretrainPrefixVarName) {
+    bool loadedPretrain = false;
+    if (!pretrainModelPath.empty()) {
+      LoadModelEx(model.ptr(), pretrainModelPath, pretrainPrefixVarName);
+      loadedPretrain = true;
+    }
     if (!fs::exists(logdir_)) {
       fs::create_directory(logdir_);
     } else {
-      if (fs::exists(best_model_path_)) {
+      if (!loadedPretrain && fs::exists(best_model_path_)) {
         LoadModel(model.ptr(), best_model_path_);
         spdlog::info("loaded model from :{}!", best_model_path_);
       }

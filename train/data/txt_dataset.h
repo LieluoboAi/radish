@@ -14,6 +14,7 @@
 
 #include <fstream>
 #include <memory>
+#include <mutex>
 #include <random>
 #include <string>
 
@@ -32,11 +33,15 @@ class TxtFile {
     CHECK(infile_) << path;
   }
   ~TxtFile() { infile_.close(); }
-  bool NextLine(std::string& line) { return bool(std::getline(infile_, line)); }
+  bool NextLine(std::string& line) {
+    std::lock_guard<std::mutex> _(lock_);
+    return bool(std::getline(infile_, line));
+  }
 
  private:
   std::ifstream infile_;
   std::string path_;
+  std::mutex lock_;
 };
 template <class Parser>
 class TxtDataset : public torch::data::Dataset<TxtDataset<Parser>, LlbExample> {
@@ -68,7 +73,7 @@ class TxtDataset : public torch::data::Dataset<TxtDataset<Parser>, LlbExample> {
     bool gotIdx = false;
     std::string rawData;
     while (!gotIdx && !read_inds_.empty()) {
-      std::uniform_int_distribution<size_t> rng(0, read_inds_.size()-1);
+      std::uniform_int_distribution<size_t> rng(0, read_inds_.size() - 1);
       idx = rng(gen_);
       if (file_lists_[idx]->NextLine(rawData)) {
         gotIdx = true;
