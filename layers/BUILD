@@ -39,3 +39,18 @@ cc_library(
         "//third_party:pytorch",
     ],
 )
+
+
+cc_library(
+    name = "crf",
+    srcs = [
+        "crf.cc",
+    ],
+    hdrs = [
+        "crf.h",
+    ],
+    deps = [
+        "//utils:logging",
+        "//third_party:pytorch",
+    ],
+)

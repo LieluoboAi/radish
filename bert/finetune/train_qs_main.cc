@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
       absl::GetFlag(FLAGS_batch_size), absl::GetFlag(FLAGS_eval_every),
       &reporter, parserConfPath, 100 /** epoch */,
       absl::GetFlag(FLAGS_warmup_steps), absl::GetFlag(FLAGS_max_test_num),
-      2 /** update per batchs */,
+      1 /** update per batchs */,
       absl::GetFlag(FLAGS_pretrained_model_path) /**pretrained model path*/,
       absl::GetFlag(
           FLAGS_pretrain_prefix_var_name) /**pretrain prefix var name*/
