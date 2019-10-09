@@ -28,11 +28,23 @@
 #include "train/progress_reporter.h"
 #include "utils/logging.h"
 
+#if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
+#if __has_include(<filesystem>)
+#define GHC_USE_STD_FS
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
+#endif
+#ifndef GHC_USE_STD_FS
+#include  "ghc/filesystem.hpp"
+namespace fs = ghc::filesystem;
+#endif
+
 namespace radish {
 
 namespace train {
 using Tensor = torch::Tensor;
-namespace fs = std::experimental::filesystem;
+
 
 template <class SampleParser, class Model, bool use_eval_for_best_model = false,
           int64_t maxTrackHist = 8, bool usePlainTxt = true>

@@ -51,5 +51,6 @@ cc_library(
         "//third_party:pytorch",
         "//train/data:leveldb_dataset",
         "//train/data:txt_dataset",
+        "@gulrak_filesystem//:filesystem",
     ],
 )

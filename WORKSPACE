@@ -286,6 +286,17 @@ http_archive(
     ],
 )
 
+http_archive(
+    name = "gulrak_filesystem",
+    build_file = "//third_party:gulrak_filesystem.BUILD",
+    strip_prefix = "filesystem-15a82e9098bcd30125248dc84dc95fc0402f3b40",
+    sha256 = "5cfcd5c28600543b7f718f7661c4f892737c3c0ff1803ba9ac052ba2688f94a3",
+    urls = [
+        "https://github.com/gulrak/filesystem/archive/15a82e9098bcd30125248dc84dc95fc0402f3b40.tar.gz",
+    ],
+)
+
+
 load("@com_github_lieluoboai_leveldb//:bazel/repositories.bzl", "repositories")
 
 repositories()
