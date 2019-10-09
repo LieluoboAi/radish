@@ -11,7 +11,6 @@
 
 #pragma once
 
-#include <experimental/filesystem>
 #include <type_traits>
 
 #include "torch/data/samplers.h"

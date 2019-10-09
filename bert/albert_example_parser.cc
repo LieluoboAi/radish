@@ -11,6 +11,8 @@
 
 #include "bert/albert_example_parser.h"
 
+#include <algorithm>
+
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -33,7 +35,7 @@ bool ALBertExampleParser::_mask_seq(int maskId, int sepId, int totalVocabSize,
   for (int i = 0; i < len; i += 4) {
     offs.push_back(i);
   }
-  std::random_shuffle(offs.begin(), offs.end());
+  std::shuffle(offs.begin(), offs.end(), gen_);
   std::vector<bool> masked(len, false);
   int num_masked = 0;
   for (auto p : offs) {
