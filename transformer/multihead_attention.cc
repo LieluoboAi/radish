@@ -54,22 +54,24 @@ void MultiheadAttentionImpl::reset() {
   register_module("attention", attention);
   fc = torch::nn::Linear(options.n_head_ * options.d_v_, options.d_model_);
   register_module("fc", fc);
-   layernorm = register_module(
-        "layernorm",
-        radish::LayerNorm(options.d_model_));
+  layernorm = register_module("layernorm", radish::LayerNorm(options.d_model_));
   dropout = register_module("dropout", torch::nn::Dropout(options.dropout_));
 
   torch::NoGradGuard guard;
   torch::nn::init::normal_(
       w_qs->weight, 0,
       std::sqrt(2.0 / (options.d_model_ + options.d_k_ + 0.000001)));
+  torch::nn::init::constant_(w_qs->bias, 0);
   torch::nn::init::normal_(
       w_ks->weight, 0,
       std::sqrt(2.0 / (options.d_model_ + options.d_k_ + 0.000001)));
+  torch::nn::init::constant_(w_ks->bias, 0);
   torch::nn::init::normal_(
       w_vs->weight, 0,
       std::sqrt(2.0 / (options.d_model_ + options.d_v_ + 0.000001)));
+  torch::nn::init::constant_(w_vs->bias, 0);
   torch::nn::init::xavier_normal_(fc->weight);
+  torch::nn::init::constant_(fc->bias, 0);
 }
 
 void MultiheadAttentionImpl::pretty_print(std::ostream& stream) const {

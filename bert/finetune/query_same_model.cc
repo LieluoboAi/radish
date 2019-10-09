@@ -58,7 +58,8 @@ QuerySameModelImpl::QuerySameModelImpl(QuerySameOptions options_)
   final_proj = torch::nn::Linear(options.d_model_, 2);
   register_module("final_proj", final_proj);
   torch::NoGradGuard guard;
-  torch::nn::init::xavier_normal_(final_proj->weight);
+  torch::nn::init::uniform_(final_proj->weight, -0.02, 0.02);
+  torch::nn::init::constant_(final_proj->bias, 0);
 }
 
 Tensor QuerySameModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
