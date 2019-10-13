@@ -20,12 +20,12 @@
 
 #include "radish/optimization/lamb.h"
 #include "radish/optimization/radam.h"
-#include "torch/optim/adam.h"
 #include "radish/train/data/leveldb_dataset.h"
 #include "radish/train/data/txt_dataset.h"
 #include "radish/train/model_io.h"
 #include "radish/train/progress_reporter.h"
 #include "radish/utils/logging.h"
+#include "torch/optim/adam.h"
 
 #if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
 #if __has_include(<filesystem>)
@@ -35,7 +35,7 @@ namespace fs = std::filesystem;
 #endif
 #endif
 #ifndef GHC_USE_STD_FS
-#include  "ghc/filesystem.hpp"
+#include "ghc/filesystem.hpp"
 namespace fs = ghc::filesystem;
 #endif
 
@@ -43,7 +43,6 @@ namespace radish {
 
 namespace train {
 using Tensor = torch::Tensor;
-
 
 template <class SampleParser, class Model, bool use_eval_for_best_model = false,
           int64_t maxTrackHist = 8, bool usePlainTxt = true>
@@ -143,11 +142,11 @@ class LlbTrainer {
     // first eval loss on test set
     auto loss_v =
         _run_on_test(model, testDatas, testTargets, batchSize, device, evals);
+    reporter->UpdateProgress(0, absl::nullopt, {loss_v}, evals);
     if (use_eval_for_best_model && evals.size() > 0) {
       loss_v = 0 - evals[0];
     }
     best_loss_ = loss_v;
-    reporter->UpdateProgress(0, absl::nullopt, {loss_v}, evals);
     for (int i = 0; i < epochs; i++) {
       auto trainLoader = torch::data::make_data_loader<DataSamplerT>(
           std::move(DatasetT(trainDatasetPath, parserConf)),
