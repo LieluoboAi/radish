@@ -58,10 +58,16 @@ QuerySameModelImpl::QuerySameModelImpl(QuerySameOptions options_)
   final_proj = torch::nn::Linear(options.d_model(), options.n_class());
   register_module("final_proj", final_proj);
   torch::NoGradGuard guard;
-  torch::nn::init::normal_(final_proj->weight,0, 0.1);
+  torch::nn::init::normal_(final_proj->weight, 0, 0.1);
   torch::nn::init::constant_(final_proj->bias, 0);
 }
 
+static void debug_(std::string title, const Tensor& t) {
+  auto maxv = t.max().item().to<float>();
+  auto minv = t.min().item().to<float>();
+  auto meanv = t.mean().item().to<float>();
+  spdlog::info("{}  max={},min={}, mean={}", title, maxv, minv, meanv);
+}
 Tensor QuerySameModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
                                     const Tensor& logits,
                                     std::vector<float>& evals,

@@ -80,30 +80,46 @@ class LlbTrainer {
       CHECK(reader.parse(ifs, parserConf)) << "config file can't be parsed!";
     }
     DatasetT testDataset(testDatasetPath, parserConf);
-    std::vector<std::vector<Tensor>> testDatas;
-    std::vector<Tensor> testTargets;
-    auto testLoader = torch::data::make_data_loader<DataSamplerT>(
-        std::move(testDataset),
-        torch::data::DataLoaderOptions().batch_size(1).workers(1));
-    spdlog::info(
-        "try load test dataset into memory,  max test examples allowed to "
-        "load={}....",
-        maxTestNum > 0 ? std::to_string(maxTestNum) : "unset");
-    int ntest = 0;
-    for (auto& input : *testLoader) {
-      auto& ex = input[0];
-      if (ex.features.empty()) {
-        continue;
+    std::vector<Tensor> all_test_examples;
+    Tensor all_test_targets;
+    {
+      std::vector<std::vector<Tensor>> testDatas;
+      std::vector<Tensor> testTargets;
+      auto testLoader = torch::data::make_data_loader<DataSamplerT>(
+          std::move(testDataset),
+          torch::data::DataLoaderOptions().batch_size(1).workers(1));
+      spdlog::info(
+          "try load test dataset into memory,  max test examples allowed to "
+          "load={}....",
+          maxTestNum > 0 ? std::to_string(maxTestNum) : "unset");
+      int ntest = 0;
+      for (auto& input : *testLoader) {
+        auto& ex = input[0];
+        if (ex.features.empty()) {
+          continue;
+        }
+        if (testDatas.empty()) {
+          testDatas.resize(ex.features.size());
+        } else {
+          CHECK_EQ(testDatas.size(), ex.features.size());
+        }
+        for (size_t i = 0; i < testDatas.size(); i++) {
+          testDatas[i].push_back(ex.features[i]);
+        }
+        testTargets.push_back(ex.target);
+        ++ntest;
+        if (maxTestNum > 0 && ntest >= maxTestNum) {
+          spdlog::info("only allow to load {} test examples!", maxTestNum);
+          break;
+        }
       }
-      testDatas.push_back(ex.features);
-      testTargets.push_back(ex.target);
-      ++ntest;
-      if (maxTestNum > 0 && ntest >= maxTestNum) {
-        spdlog::info("only allow to load {} test examples!", maxTestNum);
-        break;
+      for (size_t i = 0; i < testDatas.size(); i++) {
+        Tensor t = torch::stack(testDatas[i], 0);
+        all_test_examples.push_back(t);
       }
+      all_test_targets = torch::stack(testTargets, 0);
     }
-    spdlog::info("loaded {} test examples!", testDatas.size());
+    spdlog::info("loaded {} test examples!", all_test_targets.size(0));
     torch::Device device = torch::kCPU;
     spdlog::info("CUDA DEVICE COUNT: {}", torch::cuda::device_count());
     if (torch::cuda::is_available()) {
@@ -140,18 +156,19 @@ class LlbTrainer {
     int64_t update_batch = 0;
     std::vector<float> evals;
     // first eval loss on test set
-    auto loss_v =
-        _run_on_test(model, testDatas, testTargets, batchSize, device, evals);
+    auto loss_v = _run_on_test(model, all_test_examples, all_test_targets,
+                               batchSize, device, evals);
     reporter->UpdateProgress(0, absl::nullopt, {loss_v}, evals);
     if (use_eval_for_best_model && evals.size() > 0) {
       loss_v = 0 - evals[0];
     }
     best_loss_ = loss_v;
-    for (int i = 0; i < epochs; i++) {
+    bool earlyReturn = false;
+    for (int e = 0; e < epochs; e++) {
       auto trainLoader = torch::data::make_data_loader<DataSamplerT>(
           std::move(DatasetT(trainDatasetPath, parserConf)),
           torch::data::DataLoaderOptions().batch_size(batchSize).workers(2));
-      spdlog::info("start epoch:{}", i);
+      spdlog::info("start epoch:{}", e);
       for (auto inputs : *trainLoader) {
         model->train();
         std::vector<std::vector<Tensor>> batchDatas;
@@ -161,21 +178,28 @@ class LlbTrainer {
           if (ex.features.empty()) {
             continue;
           }
-          batchDatas.push_back(ex.features);
+          if (batchDatas.empty()) {
+            batchDatas.resize(ex.features.size());
+          } else {
+            CHECK_EQ(batchDatas.size(), ex.features.size());
+          }
+          for (size_t j = 0; j < ex.features.size(); j++) {
+            batchDatas[j].push_back(ex.features[j]);
+          }
           batchTargets.push_back(ex.target);
         }
-        std::vector<Tensor> examples;
-        std::vector<Tensor> targets;
-        _prepare_bacth_data(batchDatas, batchTargets, 0, batchDatas.size(),
-                            examples, targets, device);
-        if (examples.empty()) {
+        if (batchTargets.empty()) {
           continue;
+        }
+        Tensor target = torch::stack(batchTargets, 0).to(device);
+        std::vector<Tensor> examples;
+        for (size_t j = 0; j < batchDatas.size(); j++) {
+          examples.push_back(torch::stack(batchDatas[j], 0).to(device));
         }
         steps += 1;
         Tensor logits = model->forward(examples);
-        Tensor target = torch::stack({targets}, 0).to(device);
         evals.clear();
-        auto loss = model->CalcLoss(examples, logits, evals, target);
+        auto loss = model->CalcLoss(examples, logits, evals, target, true);
         (void)evals;  // suppress warning
         loss.backward();
         update_batch += 1;
@@ -187,8 +211,8 @@ class LlbTrainer {
         float train_loss_v = ((Tensor)loss).item().to<float>();
         if (steps % evalEvery == 0) {
           std::vector<float> tevals;
-          auto loss_v = _run_on_test(model, testDatas, testTargets, batchSize,
-                                     device, tevals);
+          auto loss_v = _run_on_test(model, all_test_examples, all_test_targets,
+                                     batchSize, device, tevals);
           reporter->UpdateProgress(steps, train_loss_v, loss_v, tevals);
           if (use_eval_for_best_model && tevals.size() > 0) {
             loss_v = 0 - tevals[0];
@@ -203,6 +227,7 @@ class LlbTrainer {
               spdlog::warn(
                   "always no improment after {} evals, minimal val is:{}!",
                   maxTrackHist, best_loss_);
+              earlyReturn = true;
               break;
             }
           }
@@ -211,80 +236,62 @@ class LlbTrainer {
                                    absl::nullopt);
         }
       }
+      if (earlyReturn) {
+        break;
+      }
     }
     if (update_batch > 0) {
       radam.step();
       update_batch = 0;
       radam.zero_grad();
     }
-    spdlog::info("done trainning....");
+    spdlog::info("done trainning,  early return ? = {}....", earlyReturn);
   }
 
  private:
-  float _run_on_test(Model model,
-                     const std::vector<std::vector<Tensor>>& testDatas,
-                     const std::vector<Tensor>& testTargets, int batchSize,
+  Tensor select_range_(const Tensor& t, int off, int end) {
+    std::vector<Tensor> ts;
+    for (int i = off; i < end; i++) {
+      ts.push_back(t.select(0, i));
+    }
+    return torch::stack(ts, 0);
+  }
+  float _run_on_test(Model model, const std::vector<Tensor>& testDatas,
+                     const Tensor& testTargets, int batchSize,
                      torch::Device device, std::vector<float>& evals) {
     model->eval();
     torch::NoGradGuard guard;
     float testLoss = 0;
-    size_t nbatch = (testDatas.size() - 1) / batchSize + 1;
+    if (testDatas.empty()) {
+      return 0;
+    }
+    size_t total = testDatas[0].size(0);
+    size_t nbatch = (total - 1) / batchSize + 1;
     size_t actBatch = 0;
+    std::vector<Tensor> all_logits;
     for (size_t b = 0; b < nbatch; b++) {
       size_t off = b * batchSize;
       // 不包含
       size_t end = off + batchSize;
-      if (end > testDatas.size()) {
-        end = testDatas.size();
+      if (end > total) {
+        end = total;
       }
-      std::vector<Tensor> examples;
-      std::vector<Tensor> targets;
-      _prepare_bacth_data(testDatas, testTargets, off, end, examples, targets,
-                          device);
-      if (examples.empty()) {
+      if (off == end) {
         continue;
       }
+      std::vector<Tensor> examples;
+      for (size_t i = 0; i < testDatas.size(); i++) {
+        examples.push_back(select_range_(testDatas[i], off, end).to(device));
+      }
       actBatch += 1;
-      Tensor target = torch::stack({targets}, 0).to(device);
       Tensor logits = model->forward(examples);
-      std::vector<float> tevals;
-      auto tloss = model->CalcLoss(examples, logits, tevals, target, false);
-      float tlv = ((Tensor)tloss).item().to<float>();
-      testLoss += tlv;
-      if (evals.empty()) {
-        evals.resize(tevals.size());
-        std::fill(evals.begin(), evals.end(), 0);
-      }
-      for (size_t i = 0; i < tevals.size(); i++) {
-        evals[i] += tevals[i];
-      }
+      all_logits.push_back(logits.to(torch::kCPU));
     }
-    for (size_t i = 0; i < evals.size(); i++) {
-      evals[i] /= static_cast<float>(actBatch + 0.00001);
-    }
-    return testLoss / static_cast<float>(actBatch + 0.00001);
-  }
-  void _prepare_bacth_data(const std::vector<std::vector<Tensor>>& testDatas,
-                           const std::vector<Tensor>& testTargets, size_t off,
-                           size_t end, std::vector<Tensor>& examples,
-                           std::vector<Tensor>& targets, torch::Device device) {
-    if (off == end || testDatas.size() == 0) {
-      return;
-    }
-    std::vector<std::vector<Tensor>> retFeatures;
-    retFeatures.resize(testDatas[0].size());
-    for (size_t i = off; i < end; i++) {
-      const std::vector<Tensor>& feature = testDatas[i];
-      for (size_t k = 0; k < feature.size(); k++) {
-        retFeatures[k].push_back(feature[k]);
-      }
-      targets.push_back(testTargets[i]);
-    }
-    examples.resize(retFeatures.size());
-    for (size_t k = 0; k < retFeatures.size(); k++) {
-      // turn [.....]  into [bsz,....]
-      examples[k] = torch::stack({retFeatures[k]}, 0).to(device);
-    }
+    Tensor logits = torch::cat(all_logits, 0);
+    CHECK_EQ(logits.size(0), static_cast<int>(total));
+    auto tloss = model->CalcLoss(testDatas, logits, evals, testTargets, false);
+    testLoss = ((Tensor)tloss).item().to<float>();
+    return testLoss;
   }
 
   bool logdir_init_(Model model, std::string pretrainModelPath,
