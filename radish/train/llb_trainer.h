@@ -160,7 +160,10 @@ class LlbTrainer {
     for (int e = 0; e < epochs; e++) {
       auto trainLoader = torch::data::make_data_loader<DataSamplerT>(
           std::move(DatasetT(trainDatasetPath, parserConf)),
-          torch::data::DataLoaderOptions().batch_size(batchSize).workers(2));
+          torch::data::DataLoaderOptions()
+              .batch_size(batchSize)
+              .workers(2)
+              .enforce_ordering(false));
       spdlog::info("start epoch:{}", e);
       for (auto inputs : *trainLoader) {
         model->train();
