@@ -36,7 +36,7 @@ class TxtFile {
     if (absl::EndsWith(path, ".tsv") || absl::EndsWith(path, ".csv")) {
       // make sure csv has head??????
       std::string line;
-      CHECK(NextLine(line));
+      CHECK(std::getline(infile_, line));
     }
   }
   ~TxtFile() { infile_.close(); }
