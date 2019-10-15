@@ -209,3 +209,15 @@ def radish_repositories():
             "https://github.com/gulrak/filesystem/archive/15a82e9098bcd30125248dc84dc95fc0402f3b40.tar.gz",
         ],
     )
+
+    _maybe(
+        http_archive,
+        name = "torchvision",
+        build_file = "@com_lieluobo_radish//third_party:torchvision.BUILD",
+        strip_prefix = "vision-0.4.0",
+        sha256 = "c270d74e568bad4559fed4544f6dd1e22e2eb1c60b088e04a5bd5787c4150589",
+        urls = [
+            "https://github.com/pytorch/vision/archive/v0.4.0.tar.gz",
+        ],
+    )
+    
