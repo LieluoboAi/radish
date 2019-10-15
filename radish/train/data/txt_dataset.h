@@ -20,34 +20,71 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
-#include "torch/torch.h"
-#include "torch/types.h"
 #include "radish/train/data/example_parser.h"
 #include "radish/train/data/llb_example.h"
 #include "radish/utils/logging.h"
+#include "torch/torch.h"
+#include "torch/types.h"
 namespace radish {
 namespace data {
 
 class TxtFile {
  public:
-  TxtFile(std::string path) : infile_(path), path_(path) {
+  TxtFile(std::string path, int hint = 0)
+      : infile_(path), path_(path), hint_(hint), done_(false) {
     CHECK(infile_) << path;
     if (absl::EndsWith(path, ".tsv") || absl::EndsWith(path, ".csv")) {
       // make sure csv has head??????
       std::string line;
-      CHECK(NextLine(line));
+      CHECK(std::getline(infile_, line));
     }
   }
   ~TxtFile() { infile_.close(); }
   bool NextLine(std::string& line) {
     std::lock_guard<std::mutex> _(lock_);
-    return bool(std::getline(infile_, line));
+    if (hint_ > 0) {
+      if (preload_buffers_.empty()) {
+        if (done_) {
+          return false;
+        }
+        if (!pre_load_()) {
+          return false;
+        }
+      }
+      line = preload_buffers_.back();
+      preload_buffers_.erase(preload_buffers_.begin() +
+                             preload_buffers_.size() - 1);
+      return true;
+    } else {
+      return bool(std::getline(infile_, line));
+    }
   }
 
  private:
+  bool pre_load_() {
+    if (done_) {
+      return false;
+    }
+    for (int i = 0; i < hint_; i++) {
+      std::string str;
+      if (std::getline(infile_, str)) {
+        preload_buffers_.push_back(str);
+      } else {
+        done_ = true;
+        break;
+      }
+    }
+    // spdlog::info("preloaded {} exs.", preload_buffers_.size());
+    std::shuffle(preload_buffers_.begin(), preload_buffers_.end(),
+                 std::mt19937());
+    return !preload_buffers_.empty();
+  }
   std::ifstream infile_;
   std::string path_;
   std::mutex lock_;
+  int hint_;
+  std::vector<std::string> preload_buffers_;
+  bool done_;
 };
 template <class Parser>
 class TxtDataset : public torch::data::Dataset<TxtDataset<Parser>, LlbExample> {
@@ -56,7 +93,9 @@ class TxtDataset : public torch::data::Dataset<TxtDataset<Parser>, LlbExample> {
       : gen_(std::random_device{}()) {
     parser_.reset(new Parser());
     CHECK(parser_->Init(parserConf));
+    int preload = parserConf.get("parser.preload", 1000).asInt();
     std::vector<std::string> pathList = absl::StrSplit(pathstr, ",");
+    int hint = preload / pathList.size();
     CHECK(pathList.size() < kMaxFiles)
         << "path number should be less than :" << kMaxFiles;
     total_ = 0;
@@ -66,7 +105,7 @@ class TxtDataset : public torch::data::Dataset<TxtDataset<Parser>, LlbExample> {
       while (txt.NextLine(line)) {
         total_ += 1;
       }
-      file_lists_.push_back(std::make_shared<TxtFile>(pathList[i]));
+      file_lists_.push_back(std::make_shared<TxtFile>(pathList[i], hint));
       read_inds_.push_back(i);
     }
     spdlog::info("total {} records", total_);

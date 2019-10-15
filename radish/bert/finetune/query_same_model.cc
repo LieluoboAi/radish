@@ -58,19 +58,23 @@ QuerySameModelImpl::QuerySameModelImpl(QuerySameOptions options_)
   final_proj = torch::nn::Linear(options.d_model(), options.n_class());
   register_module("final_proj", final_proj);
   torch::NoGradGuard guard;
-  torch::nn::init::normal_(final_proj->weight,0, 0.1);
+  torch::nn::init::normal_(final_proj->weight, 0, 0.1);
   torch::nn::init::constant_(final_proj->bias, 0);
 }
 
+static void debug_(std::string title, const Tensor& t) {
+  auto maxv = t.max().item().to<float>();
+  auto minv = t.min().item().to<float>();
+  auto meanv = t.mean().item().to<float>();
+  spdlog::info("{}  max={},min={}, mean={}", title, maxv, minv, meanv);
+}
 Tensor QuerySameModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
                                     const Tensor& logits,
                                     std::vector<float>& evals,
                                     const Tensor& target, bool train) {
-  Tensor firstTokenRepr = logits.select(1, 0);
-  Tensor preds = final_proj(firstTokenRepr);
-  Tensor loss = calc_loss_(preds, target);
+  Tensor loss = calc_loss_(logits, target);
   if (!train) {
-    float accuracy = calc_accuracy_(preds, target).item().to<float>();
+    float accuracy = calc_accuracy_(logits, target).item().to<float>();
     evals.push_back(accuracy);
   }
   return loss;
@@ -91,11 +95,11 @@ Tensor QuerySameModelImpl::forward(std::vector<Tensor> inputs) {
       torch::TensorOptions().dtype(torch::kInt64).requires_grad(false));
   // should be same device as src seq
   pos_seq = pos_seq.repeat({src_seq.size(0), 1}).to(src_seq.device());
-
   // types
   Tensor& types = inputs[1];
   auto rets = encoder(src_seq, pos_seq, types);
-  return rets[0];
+  Tensor firstTokenRepr = rets[0].select(1, 0);
+  return final_proj(firstTokenRepr);
 }
 
 }  // namespace radish
