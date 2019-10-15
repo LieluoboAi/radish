@@ -34,9 +34,10 @@ void SaveModel(std::shared_ptr<torch::nn::Module> module,
 }
 
 void LoadModel(std::shared_ptr<torch::nn::Module> module,
-               const std::string& path, const std::string& ignore_name_regex) {
+               const std::string& path, const std::string& ignore_name_regex,
+               torch::Device device) {
   torch::serialize::InputArchive archive;
-  archive.load_from(path);
+  archive.load_from(path, device);
   torch::NoGradGuard no_grad;
   std::regex re(ignore_name_regex);
   std::smatch m;
@@ -55,9 +56,10 @@ void LoadModel(std::shared_ptr<torch::nn::Module> module,
 }
 
 void LoadModelEx(std::shared_ptr<torch::nn::Module> module,
-                 const std::string& path, const std::string& prefixVarName) {
+                 const std::string& path, const std::string& prefixVarName,
+                 torch::Device device) {
   torch::serialize::InputArchive archive;
-  archive.load_from(path);
+  archive.load_from(path, device);
   torch::NoGradGuard no_grad;
   auto params = module->named_parameters(true /*recurse*/);
   auto buffers = module->named_buffers(true /*recurse*/);

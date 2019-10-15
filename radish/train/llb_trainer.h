@@ -133,7 +133,7 @@ class LlbTrainer {
     //     radish::optim::LambOptions(learningRate).weight_decay(0.01));
 
     // log目录初始化
-    logdir_init_(model, pretrainModelPath, pretrainPrefixVarName);
+    logdir_init_(model, pretrainModelPath, pretrainPrefixVarName, device);
     model->to(device);
     radam.zero_grad();
     int64_t steps = 0;
@@ -288,17 +288,17 @@ class LlbTrainer {
   }
 
   bool logdir_init_(Model model, std::string pretrainModelPath,
-                    std::string pretrainPrefixVarName) {
+                    std::string pretrainPrefixVarName, torch::Device device) {
     bool loadedPretrain = false;
     if (!pretrainModelPath.empty()) {
-      LoadModelEx(model.ptr(), pretrainModelPath, pretrainPrefixVarName);
+      LoadModelEx(model.ptr(), pretrainModelPath, pretrainPrefixVarName, device);
       loadedPretrain = true;
     }
     if (!fs::exists(logdir_)) {
       fs::create_directory(logdir_);
     } else {
       if (!loadedPretrain && fs::exists(best_model_path_)) {
-        LoadModel(model.ptr(), best_model_path_);
+        LoadModel(model.ptr(), best_model_path_, "", device);
         spdlog::info("loaded model from :{}!", best_model_path_);
       }
     }

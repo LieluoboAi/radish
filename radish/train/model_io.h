@@ -21,10 +21,12 @@ void SaveModel(std::shared_ptr<torch::nn::Module> module,
 
 void LoadModel(std::shared_ptr<torch::nn::Module> module,
                const std::string& file_name,
-               const std::string& ignore_name_regex = "");
+               const std::string& ignore_name_regex = "",
+               torch::Device device = torch::kCPU);
 
 void LoadModelEx(std::shared_ptr<torch::nn::Module> module,
                const std::string& file_name,
-               const std::string& prefixVarName = "");
+               const std::string& prefixVarName = "",
+               torch::Device device = torch::kCPU);
 }  // namespace train
 }  // namespace  radish
