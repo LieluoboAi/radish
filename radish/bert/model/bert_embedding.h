@@ -26,6 +26,9 @@ struct TORCH_API BertEmbeddingOptions {
 
   // max types
   TORCH_ARG(int64_t, max_types);
+
+  TORCH_ARG(double, ln_eps)=1e-12;
+  TORCH_ARG(double, init_range)=0.02;
 };
 
 /// Performs a lookup in a fixed size embedding table.
