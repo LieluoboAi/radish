@@ -54,3 +54,18 @@ cc_library(
         "@gulrak_filesystem//:filesystem",
     ],
 )
+
+
+cc_binary(
+    name = "test_model_load",
+    srcs = [
+        "test_model_load.cc",
+    ],
+    copts = [],
+    deps = [
+        "//third_party:pytorch",
+        "//radish/utils:logging",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+    ],
+)
