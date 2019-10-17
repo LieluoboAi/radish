@@ -15,7 +15,7 @@
 
 namespace radish {
 
-BertEmbeddingImpl::BertEmbeddingImpl(const BertEmbeddingOptions& options_)
+BertEmbeddingImpl::BertEmbeddingImpl(const BertOptions& options_)
     : options(options_) {
   reset();
 }
@@ -33,7 +33,7 @@ void BertEmbeddingImpl::reset() {
   register_module("token_type_embeddings", token_type_embeddings);
   layer_norm = LayerNorm(options.hidden_size(), options.ln_eps());
   register_module("LayerNorm", layer_norm);
-  dropout = torch::nn::Dropout(options, dropout());
+  dropout = torch::nn::Dropout(options.dropout());
   register_module("dropout", dropout);
   torch::NoGradGuard guard;
   torch::nn::init::normal_(word_embeddings->weight, 0, options.init_range());
@@ -43,11 +43,27 @@ void BertEmbeddingImpl::reset() {
                            options.init_range());
 }
 
-/// Pretty prints the `Embedding` module into the given `stream`.
-void BertEmbeddingImpl::pretty_print(std::ostream& stream) const {}
+/// Pretty prints the `BertEmbedding` module into the given `stream`.
+void BertEmbeddingImpl::pretty_print(std::ostream& stream) const {
+}
 
-/// Performs a lookup on the embedding table stored in `weight` using the
-/// `indices` supplied and returns the result.
-Tensor BertEmbeddingImpl::forward(const Tensor& indices) { return {}; }
+Tensor BertEmbeddingImpl::forward(Tensor inputIds, Tensor typeIds,
+                                  Tensor posIds) {
+  int seqLen = inputIds.size(1);
+  if (posIds.numel() == 0) {
+    posIds = torch::arange(
+        seqLen, torch::TensorOptions(torch::kInt64).device(inputIds.device()));
+    posIds = posIds.unsqueeze(0).expand_as(inputIds);
+  }
+  if (typeIds.numel() == 0) {
+    typeIds = torch::zeros_like(inputIds);
+  }
+  auto output = word_embeddings(inputIds)
+                    .add(position_embeddings(posIds))
+                    .add(token_type_embeddings(typeIds));
+  output = layer_norm(output);
+  output = dropout(output);
+  return output;
+}
 
 }  // namespace radish

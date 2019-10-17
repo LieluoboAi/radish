@@ -1,3 +1,14 @@
+/*
+ * File: bert_embedding.h
+ * Project: model
+ * Author: koth (Koth Chen)
+ * -----
+ * Last Modified: 2019-10-17 9:57:40
+ * Modified By: koth (nobody@verycool.com)
+ * -----
+ * Copyright 2020 - 2019
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -5,6 +16,8 @@
 
 #include "radish/layers/embedding_layer.h"
 #include "radish/layers/layer_norm.h"
+#include "radish/bert/model/bert_options.h"
+
 #include "torch/nn/cloneable.h"
 #include "torch/nn/modules/dropout.h"
 #include "torch/nn/pimpl.h"
@@ -12,53 +25,32 @@
 
 namespace radish {
 using Tensor = torch::Tensor;
-/// Options for the `Embedding` module.
-struct TORCH_API BertEmbeddingOptions {
-  BertEmbeddingOptions(int64_t n_vocab, int64_t hidden_size)
-      : n_vocab_(n_vocab), hidden_size_(hidden_size){};
-  /// The size of the dictionary of embeddings.
-  TORCH_ARG(int64_t, n_vocab);
-  // embedding size
-  TORCH_ARG(int64_t, hidden_size);
-
-  // max pos
-  TORCH_ARG(int64_t, max_pos);
-
-  // max types
-  TORCH_ARG(int64_t, max_types);
-
-  TORCH_ARG(double, ln_eps)=1e-12;
-  TORCH_ARG(double, init_range)=0.02;
-};
 
 /// Performs a lookup in a fixed size embedding table.
 class TORCH_API BertEmbeddingImpl
     : public torch::nn::Cloneable<BertEmbeddingImpl> {
  public:
   BertEmbeddingImpl(int64_t num_embeddings, int64_t embedding_dim)
-      : BertEmbeddingImpl(BertEmbeddingOptions(num_embeddings, embedding_dim)) {
+      : BertEmbeddingImpl(BertOptions(num_embeddings, embedding_dim)) {
   }
-  explicit BertEmbeddingImpl(const BertEmbeddingOptions& options_);
+  explicit BertEmbeddingImpl(const BertOptions& options_);
 
   void reset() override;
 
   /// Pretty prints the `Embedding` module into the given `stream`.
   void pretty_print(std::ostream& stream) const override;
 
-  /// Performs a lookup on the embedding table stored in `weight` using the
-  /// `indices` supplied and returns the result.
-  Tensor forward(const Tensor& indices);
+  Tensor forward(Tensor inputIds, Tensor typeIds = {}, Tensor posIds = {});
 
-  /// The `Options` used to configure this `BertEmbedding` module.
-  /// Changes to `EmbeddingOptions` *after construction* have no effect.
-  BertEmbeddingOptions options;
+  BertOptions options;
 
-  Embedding word_embeddings;
-  Embedding position_embeddings;
-  Embedding token_type_embeddings;
+  Embedding word_embeddings = nullptr;
+  Embedding position_embeddings = nullptr;
+  Embedding token_type_embeddings = nullptr;
   // should register as name  'LayerNorm'
-  LayerNorm layer_norm;
-  torch::nn::Dropout dropout;
+  LayerNorm layer_norm = nullptr;
+  torch::nn::Dropout dropout = nullptr;
 };
 
+TORCH_MODULE(BertEmbedding);
 }  // namespace radish
