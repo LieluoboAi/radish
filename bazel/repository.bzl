@@ -235,4 +235,24 @@ def radish_repositories():
         name = "rapidjson",
         actual = "@com_github_tencent_rapidjson//:rapidjson",
     )
-    
+
+    _maybe(
+        http_archive,
+        name = "utfcpp",
+        build_file = "@com_lieluobo_radish//third_party:utfcpp.BUILD",
+        strip_prefix = "utfcpp-3.1",
+        sha256 = "ab531c3fd5d275150430bfaca01d7d15e017a188183be932322f2f651506b096",
+        urls = [
+            "https://github.com/nemtrif/utfcpp/archive/v3.1.tar.gz",
+        ],
+    )
+
+    _maybe(
+        http_archive,
+        name = "googletest",
+        strip_prefix = "googletest-release-1.10.0",
+        sha256 = "9dc9157a9a1551ec7a7e43daea9a694a0bb5fb8bec81235d8a1e6ef64c716dcb",
+        urls = [
+            "https://github.com/google/googletest/archive/release-1.10.0.tar.gz",
+        ],
+    )

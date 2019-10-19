@@ -11,14 +11,13 @@ cc_library(
         "span_bert_example_parser.h",
     ],
     deps = [
-        "//third_party:pytorch",
         "//radish/train/data:example_parser",
-       "//radish/utils:logging",
+        "//radish/utils:logging",
+        "//third_party:pytorch",
         "@sentencepiece//sentencepiece:error",
         "@sentencepiece//sentencepiece:sentencepiece_processor",
     ],
 )
-
 
 cc_library(
     name = "albert_example_parser",
@@ -29,9 +28,9 @@ cc_library(
         "albert_example_parser.h",
     ],
     deps = [
-        "//third_party:pytorch",
         "//radish/train/data:example_parser",
-       "//radish/utils:logging",
+        "//radish/utils:logging",
+        "//third_party:pytorch",
         "@sentencepiece//sentencepiece:error",
         "@sentencepiece//sentencepiece:sentencepiece_processor",
     ],
@@ -46,9 +45,9 @@ cc_library(
         "span_bert_model.h",
     ],
     deps = [
-        "//third_party:pytorch",
         "//radish/train:llb_model",
         "//radish/transformer:transformer_encoder",
+        "//third_party:pytorch",
     ],
 )
 
@@ -61,9 +60,9 @@ cc_library(
         "albert_model.h",
     ],
     deps = [
-        "//third_party:pytorch",
         "//radish/train:llb_model",
         "//radish/transformer:transformer_encoder",
+        "//third_party:pytorch",
     ],
 )
 
@@ -76,13 +75,12 @@ cc_binary(
     deps = [
         ":span_bert_example_parser",
         ":span_bert_model",
-        "//radish/utils:logging",
         "//radish/train:llb_trainer",
+        "//radish/utils:logging",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
     ],
 )
-
 
 cc_binary(
     name = "train_albert_main",
@@ -93,9 +91,34 @@ cc_binary(
     deps = [
         ":albert_example_parser",
         ":albert_model",
-        "//radish/utils:logging",
         "//radish/train:llb_trainer",
+        "//radish/utils:logging",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
+    ],
+)
+
+cc_library(
+    name = "bert_tokenizer",
+    srcs = [
+        "bert_tokenizer.cc",
+        "bert_tokenizer.h",
+    ],
+    copts = [],
+    deps = [
+        "//radish/utils:logging",
+        "@com_google_absl//absl/strings",
+        "@utfcpp",
+    ],
+)
+
+cc_test(
+    name = "bert_tokenizer_test",
+    srcs = [
+        "bert_tokenizer_test.cc",
+    ],
+    deps = [
+        ":bert_tokenizer",
+        "@googletest//:gtest_main",
     ],
 )
