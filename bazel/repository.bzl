@@ -220,4 +220,19 @@ def radish_repositories():
             "https://github.com/pytorch/vision/archive/v0.4.0.tar.gz",
         ],
     )
+
+    _maybe(
+        http_archive,
+        name = "com_github_tencent_rapidjson",
+        build_file = "@com_lieluobo_radish//third_party:rapidjson.BUILD",
+        strip_prefix = "rapidjson-1.1.0",
+        sha256 = "bf7ced29704a1e696fbccf2a2b4ea068e7774fa37f6d7dd4039d0787f8bed98e",
+        urls = [
+            "https://github.com/tencent/rapidjson/archive/v1.1.0.tar.gz",
+        ],
+    )
+    native.bind(
+        name = "rapidjson",
+        actual = "@com_github_tencent_rapidjson//:rapidjson",
+    )
     

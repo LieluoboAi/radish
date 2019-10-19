@@ -34,6 +34,7 @@ cc_library(
         "//radish/utils:logging",
         "//radish/utils:tensor_util",
         "//third_party:pytorch",
+        "//external:rapidjson",
     ],
 )
 cc_library(
@@ -63,8 +64,10 @@ cc_binary(
     ],
     copts = [],
     deps = [
+        ":model_io",
         "//third_party:pytorch",
         "//radish/utils:logging",
+        "//radish/bert/model:bert_model",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
     ],

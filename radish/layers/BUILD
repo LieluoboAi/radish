@@ -32,3 +32,17 @@ cc_library(
         "//third_party:pytorch",
     ],
 )
+
+cc_library(
+    name = "embedding_layer",
+    srcs = [
+        "embedding_layer.cc",
+    ],
+    hdrs = [
+        "embedding_layer.h",
+    ],
+    deps = [
+        "//radish/utils:logging",
+        "//third_party:pytorch",
+    ],
+)

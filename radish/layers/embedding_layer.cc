@@ -47,7 +47,7 @@ void EmbeddingImpl::reset() {
 }
 
 void EmbeddingImpl::pretty_print(std::ostream& stream) const {
-  stream << "torch::nn::Embedding(num_embeddings=" << options.num_embeddings()
+  stream << "radish::Embedding(num_embeddings=" << options.num_embeddings()
          << ", embedding_dim=" << options.embedding_dim();
   if (options.padding_idx() != c10::nullopt) {
     stream << ", padding_idx=" << *options.padding_idx();

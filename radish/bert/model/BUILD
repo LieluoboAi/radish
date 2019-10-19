@@ -6,7 +6,7 @@ package(
 cc_library(
     name = "bert_options",
     srcs = [
-        "bert_options.h",
+        "bert_options.cc",
     ],
     hdrs = [
         "bert_options.h",
