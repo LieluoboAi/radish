@@ -44,7 +44,7 @@ void SaveModel(std::shared_ptr<torch::nn::Module> module,
 
 void LoadModel(std::shared_ptr<torch::nn::Module> module,
                const std::string& path, const std::string& ignore_name_regex,
-               torch::Device device) {
+               torch::Device device, bool log) {
   torch::serialize::InputArchive archive;
   archive.load_from(path, device);
   torch::NoGradGuard no_grad;
@@ -55,11 +55,17 @@ void LoadModel(std::shared_ptr<torch::nn::Module> module,
   for (auto& val : params) {
     if (!std::regex_match(val.key(), m, re)) {
       archive.read(val.key(), val.value());
+      if (log) {
+        spdlog::info("load tensor :{}", val.key());
+      }
     }
   }
   for (auto& val : buffers) {
     if (!std::regex_match(val.key(), m, re)) {
       archive.read(val.key(), val.value(), /*is_buffer*/ true);
+      if (log) {
+        spdlog::info("load buffer :{}", val.key());
+      }
     }
   }
 }

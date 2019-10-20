@@ -31,18 +31,31 @@ static std::unordered_set<uint16_t> kChinesePunts = {
     12290, 65306, 65311, 8212, 8216, 12304, 12305, 12298, 12299, 65307};
 static int kMaxCharsPerWords = 100;
 
-BertTokenizer::BertTokenizer(std::string vocab_file) {
+bool BertTokenizer::Init(std::string vocab_file) {
   load_vocab_(vocab_file);
-  CHECK(token_2_id_map_.find(kPadToken) != token_2_id_map_.end());
-  CHECK(token_2_id_map_.find(kUnkToken) != token_2_id_map_.end());
-  CHECK(token_2_id_map_.find(kClsToken) != token_2_id_map_.end());
-  CHECK(token_2_id_map_.find(kSepToken) != token_2_id_map_.end());
-  CHECK(token_2_id_map_.find(kMaskToken) != token_2_id_map_.end());
+  if (token_2_id_map_.find(kPadToken) == token_2_id_map_.end()) {
+    return false;
+  }
+  if (token_2_id_map_.find(kUnkToken) == token_2_id_map_.end()) {
+    return false;
+  }
+  if (token_2_id_map_.find(kClsToken) == token_2_id_map_.end()) {
+    return false;
+  }
+  if (token_2_id_map_.find(kSepToken) == token_2_id_map_.end()) {
+    return false;
+  }
+  if (token_2_id_map_.find(kMaskToken) == token_2_id_map_.end()) {
+    return false;
+  }
   int v = token_2_id_map_.at(kPadToken);
-  CHECK_EQ(0, v);
+  if (v != 0) {
+    return false;
+  }
+  return true;
 }
-BertTokenizer::~BertTokenizer() {}
 std::vector<int> BertTokenizer::Encode(std::string text) {
+  (void)s_bRegistered;  // force the registeration
   std::vector<int> results;
   absl::RemoveExtraAsciiWhitespace(&text);
   text = absl::AsciiStrToLower(text);
@@ -67,6 +80,12 @@ std::vector<int> BertTokenizer::Encode(std::string text) {
   }
   return results;
 }
+
+int BertTokenizer::PadId() const { return token_2_id_map_.at(kPadToken); }
+int BertTokenizer::MaskId() const { return token_2_id_map_.at(kMaskToken); }
+int BertTokenizer::SepId() const { return token_2_id_map_.at(kSepToken); }
+int BertTokenizer::ClsId() const { return token_2_id_map_.at(kClsToken); }
+int BertTokenizer::UnkId() const { return token_2_id_map_.at(kUnkToken); }
 
 void BertTokenizer::max_seg_(std::string s, std::vector<int>& results) {
   int end = s.size();

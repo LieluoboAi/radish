@@ -63,8 +63,7 @@ class LlbTrainer {
                 std::string parserConfPath = {}, int epochs = 50,
                 int warmSteps = 1, int64_t maxTestNum = 0,
                 int64_t updatePerBatches = 1,
-                std::string pretrainModelPath = "",
-                std::string pretrainPrefixVarName = "") {
+                std::string pretrainModelPath = "") {
     Json::Value parserConf;
     if (!parserConfPath.empty()) {
       Json::Reader reader;
@@ -142,7 +141,7 @@ class LlbTrainer {
     //     radish::optim::LambOptions(learningRate).weight_decay(0.01));
 
     // log目录初始化
-    logdir_init_(model, pretrainModelPath, pretrainPrefixVarName, device);
+    logdir_init_(model, pretrainModelPath, device);
     model->to(device);
     radam.zero_grad();
     int64_t steps = 0;
@@ -291,11 +290,14 @@ class LlbTrainer {
   }
 
   bool logdir_init_(Model model, std::string pretrainModelPath,
-                    std::string pretrainPrefixVarName, torch::Device device) {
+                    torch::Device device) {
     bool loadedPretrain = false;
     if (!pretrainModelPath.empty()) {
-      LoadModelEx(model.ptr(), pretrainModelPath, pretrainPrefixVarName, device);
-      loadedPretrain = true;
+      if (model->LoadFromPretrain(pretrainModelPath)) {
+        loadedPretrain = true;
+      } else {
+        spdlog::info("try load from :{} error, skip!", pretrainModelPath);
+      }
     }
     if (!fs::exists(logdir_)) {
       fs::create_directory(logdir_);

@@ -15,18 +15,15 @@
 
 namespace radish {
 
-static Tensor gelu_new(Tensor x) {
-  // Implementation of the gelu activation function currently in Google Bert
-  // repo (identical to OpenAI GPT).
-  //    Also see https://arxiv.org/abs/1606.08415
+// static Tensor gelu_new(Tensor x) {
+//   // Implementation of the gelu activation function currently in Google Bert
+//   // repo (identical to OpenAI GPT).
+//   //    Also see https://arxiv.org/abs/1606.08415
 
-  //  0.5 * x * (1 + torch::tanh(std::sqrt(2.0 / M_PI) * (x + 0.044715 *
-  //  torch::pow(x, 3))));
-  Tensor p = torch::pow(x, 3).mul_(0.044715);
-  p = p.add(x);
-  p.mul_(std::sqrt(2.0 / M_PI));
-  return x.mul(0.5).mul_(torch::tanh(p).add_(1.0));
-}
+//   //  0.5 * x * (1 + torch::tanh(std::sqrt(2.0 / M_PI) * (x + 0.044715 *
+//   //  torch::pow(x, 3))));
+//   return x * 0.5 * (1.0 + torch::erf(x.div(std::sqrt(2.0))));
+// }
 BertIntermediateImpl::BertIntermediateImpl(const BertOptions& options_)
     : options(options_) {
   reset();
@@ -40,7 +37,7 @@ void BertIntermediateImpl::reset() {
 }
 Tensor BertIntermediateImpl::forward(Tensor hidden_states) {
   hidden_states = dense(hidden_states);
-  hidden_states = gelu_new(hidden_states);
+  hidden_states = torch::gelu(hidden_states);
   return hidden_states;
 }
 

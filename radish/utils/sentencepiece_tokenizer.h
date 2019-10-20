@@ -1,25 +1,30 @@
 /*
- * File: bert_tokenizer.h
- * Project: bert
- * File Created: Saturday, 19th October 2019 10:41:25 am
+ * File: sentencepiece_tokenizer.h
+ * Project: utils
+ * File Created: Sunday, 20th October 2019 1:05:16 pm
  * Author: Koth (yovnchine@163.com)
  * -----
- * Last Modified: Saturday, 19th October 2019 10:41:38 am
+ * Last Modified: Sunday, 20th October 2019 1:05:18 pm
  * Modified By: Koth (yovnchine@163.com>)
  * -----
  */
+
 #pragma once
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "radish/utils/text_tokenizer.h"
 
+namespace sentencepiece {
+class SentencePieceProcessor;
+}  // namespace sentencepiece
+
 namespace radish {
-using UString = std::basic_string<uint16_t>;
-class BertTokenizer : public TextTokenizer,
-                      TextTokenizerRegisteeStub<BertTokenizer> {
+class SentencePieceTokenizer
+    : public TextTokenizer,
+      TextTokenizerRegisteeStub<SentencePieceTokenizer> {
  public:
   bool Init(std::string vocab) override;
   std::vector<int> Encode(std::string text) override;
@@ -31,17 +36,13 @@ class BertTokenizer : public TextTokenizer,
   int ClsId() const override;
   int UnkId() const override;
 
- private:
-  void max_seg_(std::string s, std::vector<int>& results);
-  void load_vocab_(std::string path);
-  UString _basic_tokenize(UString text);
-  UString _clean(UString text);
-  std::unordered_map<std::string, int> token_2_id_map_;
-  std::vector<std::string> tokens_;
   static std::string kUnkToken;
   static std::string kMaskToken;
   static std::string kSepToken;
   static std::string kPadToken;
   static std::string kClsToken;
+
+ private:
+  std::unique_ptr<sentencepiece::SentencePieceProcessor> spp_;
 };
 }  // namespace radish

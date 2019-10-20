@@ -75,9 +75,7 @@ int main(int argc, char* argv[]) {
         &reporter, parserConfPath, 100 /** epoch */,
         absl::GetFlag(FLAGS_warmup_steps), absl::GetFlag(FLAGS_max_test_num),
         1 /** update per batchs */,
-        absl::GetFlag(FLAGS_pretrained_model_path) /**pretrained model path*/,
-        absl::GetFlag(
-            FLAGS_pretrain_prefix_var_name) /**pretrain prefix var name*/
+        absl::GetFlag(FLAGS_pretrained_model_path) /**pretrained model path*/
     );
   } else {
     radish::train::LlbTrainer<radish::QSExampleParser, radish::QuerySameModel,
@@ -89,9 +87,7 @@ int main(int argc, char* argv[]) {
         &reporter, parserConfPath, 100 /** epoch */,
         absl::GetFlag(FLAGS_warmup_steps), absl::GetFlag(FLAGS_max_test_num),
         1 /** update per batchs */,
-        absl::GetFlag(FLAGS_pretrained_model_path) /**pretrained model path*/,
-        absl::GetFlag(
-            FLAGS_pretrain_prefix_var_name) /**pretrain prefix var name*/
+        absl::GetFlag(FLAGS_pretrained_model_path) /**pretrained model path*/
     );
   }
   return 0;

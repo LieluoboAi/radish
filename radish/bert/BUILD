@@ -105,11 +105,14 @@ cc_library(
         "bert_tokenizer.h",
     ],
     copts = [],
+    linkstatic = True,
     deps = [
         "//radish/utils:logging",
+        "//radish/utils:text_tokenizer",
         "@com_google_absl//absl/strings",
         "@utfcpp",
     ],
+    alwayslink = True,
 )
 
 cc_test(

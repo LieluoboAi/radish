@@ -12,16 +12,17 @@
 
 #include "gtest/gtest.h"
 
-#include "radish/bert/bert_tokenizer.h"
+#include "radish/utils/text_tokenizer.h"
 
 class BertTokenizerTest : public testing::Test {
  protected:
   virtual void SetUp() {
     tokenizer_.reset(
-        new radish::BertTokenizer("/e/data/bert_base_chinese/vocab.txt"));
+        radish::TextTokenizerFactory::Create("radish::BertTokenizer"));
+    EXPECT_TRUE(tokenizer_->Init("/e/data/bert_base_chinese/vocab.txt"));
   }
   virtual void TearDown() {}
-  std::unique_ptr<radish::BertTokenizer> tokenizer_;
+  std::unique_ptr<radish::TextTokenizer> tokenizer_;
 };
 
 TEST_F(BertTokenizerTest, TestEncode) {

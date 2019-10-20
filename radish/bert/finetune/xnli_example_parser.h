@@ -14,12 +14,10 @@
 #include <random>
 #include "radish/train/data/example_parser.h"
 
-namespace sentencepiece {
-class SentencePieceProcessor;
-}  // namespace sentencepiece
-
 namespace radish {
 // 128 -1
+
+class TextTokenizer;
 
 struct Ex {
   explicit Ex(int maxLen) : x(maxLen, 0), types(maxLen, 0) {}
@@ -42,7 +40,7 @@ class XNLIExampleParser : public radish::data::ExampleParser {
  private:
   void _select_a_b_ids(std::vector<int>& aids, std::vector<int>& bids,
                        bool needRandom = false);
-  std::shared_ptr<sentencepiece::SentencePieceProcessor> spp_;
+  std::shared_ptr<TextTokenizer> tokenizer_;
   std::mt19937 gen_;
 };
 

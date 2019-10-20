@@ -10,8 +10,8 @@
  */
 #include "radish/bert/model/bert_attention.h"
 
+#include "radish/utils/logging.h"
 #include "torch/nn/init.h"
-
 namespace radish {
 
 BertSelfAttentionImpl::BertSelfAttentionImpl(const BertOptions& options_)
@@ -65,8 +65,8 @@ std::vector<Tensor> BertSelfAttentionImpl::forward(Tensor hidden_states,
   auto key_layer = transpose_for_scores(mixed_key_layer);
   auto value_layer = transpose_for_scores(mixed_value_layer);
 
-  //  Take the dot product between "query" and "key" to get the raw attention
-  //  scores.
+  //  Take the dot product between "query" and "key" to get the raw
+  //  attention scores.
   auto attention_scores =
       torch::matmul(query_layer, key_layer.transpose(-1, -2));
   attention_scores = attention_scores / std::sqrt(attention_head_size_);
@@ -77,7 +77,7 @@ std::vector<Tensor> BertSelfAttentionImpl::forward(Tensor hidden_states,
   }
 
   // Normalize the attention scores to probabilities.
-  auto attention_probs = torch::softmax(attention_scores, 1);
+  auto attention_probs = torch::softmax(attention_scores, -1);
 
   // This is actually dropping out entire tokens to attend to, which might
   // seem a bit unusual, but is taken from the original Transformer paper.

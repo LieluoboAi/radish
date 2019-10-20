@@ -17,24 +17,29 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
-#include "sentencepiece/sentencepiece_processor.h"
 #include "radish/utils/logging.h"
+#include "radish/utils/text_tokenizer.h"
 
 namespace radish {
-// 128 -1
-static int kMaxLen = 127;
+static int kMaxLen = 128;
 
 XNLIExampleParser::XNLIExampleParser() : gen_(std::random_device{}()) {}
 
 XNLIExampleParser::~XNLIExampleParser() = default;
 bool XNLIExampleParser::Init(const Json::Value& config) {
-  std::string spm_model_path = config.get("spm_model_path", "").asString();
-  spdlog::info("got spm_model_path:{}", spm_model_path);
-  if (spm_model_path.empty()) {
+  std::string tokenizer_vocab = config.get("tokenizer_vocab", "").asString();
+  spdlog::info("got tokenizer_vocab:{}", tokenizer_vocab);
+  if (tokenizer_vocab.empty()) {
     return false;
   }
-  spp_.reset(new sentencepiece::SentencePieceProcessor());
-  if (!spp_->Load(spm_model_path).ok()) {
+  std::string tokenizer_cls =
+      config.get("tokenizer_class", "radish::BertTokenizer").asString();
+  tokenizer_.reset(radish::TextTokenizerFactory::Create(tokenizer_cls));
+  if (!tokenizer_.get()) {
+    spdlog::info("Can't get tokenizer for cls:{}", tokenizer_cls);
+    return false;
+  }
+  if (!tokenizer_->Init(tokenizer_vocab)) {
     return false;
   }
   return true;
@@ -45,18 +50,18 @@ void XNLIExampleParser::_select_a_b_ids(std::vector<int>& aids,
                                         bool needRandom) {
   int alen = aids.size();
   int blen = bids.size();
-  if (alen + blen <= kMaxLen - 1) {
+  if (alen + blen <= kMaxLen - 3) {
     return;
   }
-  int mustKeep = (kMaxLen - 1) / 3;
+  int mustKeep = (kMaxLen - 3) / 3;
   if (alen <= mustKeep) {
-    blen = kMaxLen - 1 - alen;
+    blen = kMaxLen - 3 - alen;
     bids.erase(bids.begin() + blen, bids.end());
   } else if (blen <= mustKeep) {
-    alen = kMaxLen - 1 - blen;
+    alen = kMaxLen - 3 - blen;
     aids.erase(aids.begin() + alen, aids.end());
   } else {
-    int remainKeep = kMaxLen - 1 - mustKeep * 2;
+    int remainKeep = kMaxLen - 3 - mustKeep * 2;
     if (alen - mustKeep <= remainKeep) {
       // keep all a
       int keepb = remainKeep - alen + mustKeep;
@@ -91,41 +96,43 @@ bool XNLIExampleParser::ParseOne(std::string line, data::LlbExample& example) {
     spdlog::warn("Opps , size is:{}, example error:{}", ss.size(), x);
     return false;
   }
-
   std::string ax = nf == 3 ? ss[0] : ss[6];
   std::string bx = nf == 3 ? ss[1] : ss[7];
   if (nf == 3) {
     ax = absl::StrReplaceAll(ax, {{" ", ""}});
     bx = absl::StrReplaceAll(bx, {{" ", ""}});
   }
-  auto aids = spp_->EncodeAsIds(ax);
-  auto bids = spp_->EncodeAsIds(bx);
-  int totalVocabSize = spp_->GetPieceSize();
-  Ex ex(kMaxLen + 1);
-  int clsId = totalVocabSize;
-  int maskId = totalVocabSize + 1;
-  int sepId = totalVocabSize + 2;
+  auto aids = tokenizer_->Encode(ax);
+  auto bids = tokenizer_->Encode(bx);
+  Ex ex(kMaxLen);
+  int clsId = tokenizer_->ClsId();
+  int maskId = tokenizer_->MaskId();
+  int sepId = tokenizer_->SepId();
   ex.x[0] = clsId;
-  ex.types[0] = 1;
+  ex.types[0] = 0;
   std::string gold = nf == 3 ? ss[2] : ss[1];
   auto it = kGoldLabelMap.find(gold);
   CHECK(it != kGoldLabelMap.end()) << gold;
   ex.label = it->second;
   _select_a_b_ids(aids, bids, true);
-  CHECK_LE(aids.size() + bids.size(), kMaxLen - 1);
+  CHECK_LE(aids.size() + bids.size(), kMaxLen - 3);
   int k = 1;
   for (size_t i = 0; i < aids.size(); i++) {
     ex.x[k] = aids[i];
-    ex.types[k] = 1;
+    ex.types[k] = 0;
     k += 1;
   }
-  ex.types[k] = 1;
+  ex.types[k] = 0;
   ex.x[k] = sepId;
   k += 1;
   for (size_t i = 0; i < bids.size(); i++) {
     ex.x[k] = bids[i];
-    ex.types[k] = 2;
+    ex.types[k] = 1;
     k += 1;
+  }
+  ex.x[k] = sepId;
+  for (; k < kMaxLen; k++) {
+    ex.types[k] = 1;
   }
   example.features.push_back(
       torch::tensor(ex.x, at::dtype(torch::kInt64).requires_grad(false)));
@@ -139,30 +146,33 @@ bool XNLIExampleParser::ParseOne(std::string line, data::LlbExample& example) {
 bool XNLIExampleParser::CreateNoLabel(const std::string& a,
                                       const std::string& b,
                                       data::LlbExample& example) {
-  auto aids = spp_->EncodeAsIds(absl::AsciiStrToLower(a));
-  auto bids = spp_->EncodeAsIds(absl::AsciiStrToLower(b));
-  int totalVocabSize = spp_->GetPieceSize();
-  Ex ex(kMaxLen + 1);
-  int clsId = totalVocabSize;
-  int maskId = totalVocabSize + 1;
-  int sepId = totalVocabSize + 2;
+  auto aids = tokenizer_->Encode(a);
+  auto bids = tokenizer_->Encode(b);
+  Ex ex(kMaxLen);
+  int clsId = tokenizer_->ClsId();
+  int maskId = tokenizer_->MaskId();
+  int sepId = tokenizer_->SepId();
   ex.x[0] = clsId;
-  ex.types[0] = 1;
+  ex.types[0] = 0;
   _select_a_b_ids(aids, bids, false);
-  CHECK_LE(aids.size() + bids.size(), kMaxLen - 1);
+  CHECK_LE(aids.size() + bids.size(), kMaxLen - 3);
   int k = 1;
   for (size_t i = 0; i < aids.size(); i++) {
     ex.x[k] = aids[i];
-    ex.types[k] = 1;
+    ex.types[k] = 0;
     k += 1;
   }
-  ex.types[k] = 1;
+  ex.types[k] = 0;
   ex.x[k] = sepId;
   k += 1;
   for (size_t i = 0; i < bids.size(); i++) {
     ex.x[k] = bids[i];
-    ex.types[k] = 2;
+    ex.types[k] = 1;
     k += 1;
+  }
+  ex.x[k] = sepId;
+  for (; k < kMaxLen; k++) {
+    ex.types[k] = 1;
   }
   example.features.push_back(
       torch::tensor(ex.x, at::dtype(torch::kInt64).requires_grad(false)));

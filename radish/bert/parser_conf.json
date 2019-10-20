@@ -1,3 +1,4 @@
 {
-   "spm_model_path":"radish/bert/data/char_model_32k.model"
+   "tokenizer_vocab": "/e/data/bert-base-chinese/vocab.txt",
+   "tokenizer_class": "radish::BertTokenizer"
 }
