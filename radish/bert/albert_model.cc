@@ -69,42 +69,31 @@ ALBertModelImpl::ALBertModelImpl(BertOptions options_) : options(options_) {
   register_module("vocab_proj", vocab_proj);
   order_proj = torch::nn::Linear(options.hidden_size(), 2);
   register_module("order_proj", order_proj);
-  laynorm = LayerNorm(options.d_wordvec(),options.ln_eps());
+  laynorm = LayerNorm(options.d_wordvec(), options.ln_eps());
   register_module("laynorm", laynorm);
   torch::NoGradGuard guard;
   vocab_proj->weight = bert->embeddings->word_embeddings->weight;
   torch::nn::init::normal_(order_proj->weight, 0, options.init_range());
-  torch::nn::init::constant_(vocab_proj->bias,0);
-  torch::nn::init::constant_(order_proj->bias,0);
+  torch::nn::init::constant_(vocab_proj->bias, 0);
+  torch::nn::init::constant_(order_proj->bias, 0);
 }
 
 Tensor ALBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
                                  const std::vector<Tensor>& logits,
                                  std::vector<float>& evals,
                                  const Tensor& target) {
-  Tensor maskedOutput = batch_select(logits[0], inputs[1]);
-  int bsz = maskedOutput.size(0);
-  int numTargets = maskedOutput.size(1);
-  int hidden = maskedOutput.size(2);
-  Tensor maskPreds = maskedOutput.view({-1, hidden})
-                         .mm(bert->embeddings->embedding_to_hidden_proj->weight)
-                         .view({bsz, numTargets, -1});
-  maskPreds = laynorm(maskPreds);
-  maskPreds = vocab_proj(maskPreds);
-  Tensor mlm_loss = calc_loss_(maskPreds, target, true);
+  Tensor mlm_loss = calc_loss_(logits[0], target, true);
   if (!is_training()) {
     float mlm_accuracy =
-        calc_accuracy_(maskPreds, target, true).item().to<float>();
+        calc_accuracy_(logits[0], target, true).item().to<float>();
     evals.push_back(mlm_accuracy);
   }
 
-  Tensor firstTokenRepr = logits[1];
-  Tensor orderPreds = order_proj(firstTokenRepr);
   //  inputs[3] is the ordered target
-  Tensor order_loss = calc_loss_(orderPreds, inputs[3], false);
+  Tensor order_loss = calc_loss_(logits[1], inputs[3], false);
   if (!is_training()) {
     float order_accuracy =
-        calc_accuracy_(orderPreds, inputs[3], false).item().to<float>();
+        calc_accuracy_(logits[1], inputs[3], false).item().to<float>();
     evals.push_back(order_accuracy);
   }
   return mlm_loss.add(order_loss);
@@ -124,7 +113,20 @@ std::vector<Tensor> ALBertModelImpl::forward(std::vector<Tensor> inputs) {
   Tensor mask = src_seq.ne(0).toType(torch::kFloat32).to(src_seq.device());
   // types
   Tensor& types = inputs[2];
-  return bert(src_seq, mask, types);
+  auto rets = bert(src_seq, mask, types);
+
+  Tensor maskedOutput = batch_select(rets[0], inputs[1]);
+  int bsz = maskedOutput.size(0);
+  int numTargets = maskedOutput.size(1);
+  int hidden = maskedOutput.size(2);
+  Tensor maskPreds = maskedOutput.view({-1, hidden})
+                         .mm(bert->embeddings->embedding_to_hidden_proj->weight)
+                         .view({bsz, numTargets, -1});
+  maskPreds = laynorm(maskPreds);
+  maskPreds = vocab_proj(maskPreds);
+
+  Tensor orderPreds = order_proj(rets[1]);
+  return {maskPreds, orderPreds};
 }
 
 }  // namespace radish
