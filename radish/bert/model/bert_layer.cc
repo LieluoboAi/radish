@@ -61,7 +61,8 @@ void BertOutputImpl::reset() {
 Tensor BertOutputImpl::forward(Tensor hidden_states, Tensor input_tensor) {
   hidden_states = dense(hidden_states);
   hidden_states = dropout(hidden_states);
-  hidden_states = layer_norm(hidden_states + input_tensor);
+  hidden_states.add_(input_tensor);
+  hidden_states = layer_norm(hidden_states);
   return hidden_states;
 }
 

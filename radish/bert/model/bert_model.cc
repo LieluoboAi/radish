@@ -51,10 +51,13 @@ std::vector<Tensor> BertModelImpl::forward(Tensor input_ids,
   // positions we want to attend and -10000.0 for masked positions.
   //  Since we are adding it to the raw scores before the softmax, this is
   // effectively the same as removing these entirely.
-  extended_attention_mask = extended_attention_mask.neg()
-                                .toType(torch::kFloat32)
-                                .add(1.0)
-                                .mul(-10000.0);
+  // extended_attention_mask = extended_attention_mask.neg()
+  //                               .toType(torch::kFloat32)
+  //                               .add(1.0)
+  //                               .mul(-10000.0);
+  extended_attention_mask = extended_attention_mask.toType(torch::kFloat32);
+  extended_attention_mask.neg_().add_(1.0).mul_(-10000.0);
+  
   // Prepare head mask if needed
   // 1.0 in head_mask indicate we keep the head
   // attention_probs has shape bsz x n_heads x N x N
