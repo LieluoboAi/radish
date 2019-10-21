@@ -277,6 +277,7 @@ class LlbTrainer {
         continue;
       }
       std::vector<Tensor> examples;
+      Tensor targets = select_range_(testTargets, off, end).to(device);
       for (size_t i = 0; i < testDatas.size(); i++) {
         examples.push_back(select_range_(testDatas[i], off, end).to(device));
       }
@@ -284,7 +285,7 @@ class LlbTrainer {
       std::vector<Tensor> logits = model->forward(examples);
       if (inbatch) {
         std::vector<float> tevals;
-        auto tloss = model->CalcLoss(examples, logits, tevals, testTargets);
+        auto tloss = model->CalcLoss(examples, logits, tevals, targets);
         if (evals.empty()) {
           evals.insert(evals.begin(), tevals.begin(), tevals.end());
         } else {
