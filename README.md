@@ -47,7 +47,7 @@ Radish可以让你的模型从训练到部署都使用相同C++代码库， 借�
 链接:  https://pan.baidu.com/s/1Nlyvw41SfmNzQwhorfQg3g  
 提取码:  9m55 
 ```
-radish/bert/finetune/train_bert_cls_finetune.cc 是一个finetune的示例，使用bert base chinese, batch size=32, lr=0.00005 1个epoch,在xnli数据测试集上达到95.94%
+radish/bert/finetune/train_bert_cls_finetune.cc 是一个finetune的示例，使用bert base chinese, batch size=32, lr=0.00005 1个epoch,在xnli数据测试集上达到75.94%
 
 
 
