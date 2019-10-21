@@ -21,6 +21,7 @@ static Tensor batch_select(const Tensor& input, const Tensor& inds) {
   return input.gather(1, dummy);
 }
 
+
 static Tensor calc_loss_(const Tensor& pred_, const Tensor& target,
                          bool labelSmoothing) {
   Tensor gold = target.contiguous().view(-1);
@@ -78,6 +79,9 @@ ALBertModelImpl::ALBertModelImpl(BertOptions options_) : options(options_) {
   torch::nn::init::constant_(order_proj->bias, 0);
 }
 
+bool ALBertModelImpl::EvalInBatch() const{
+  return true;
+}
 Tensor ALBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
                                  const std::vector<Tensor>& logits,
                                  std::vector<float>& evals,

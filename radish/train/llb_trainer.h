@@ -264,6 +264,8 @@ class LlbTrainer {
     size_t nbatch = (total - 1) / batchSize + 1;
     size_t actBatch = 0;
     std::vector<std::vector<Tensor>> all_logits;
+    evals.clear();
+    bool inbatch = model->EvalInBatch();
     for (size_t b = 0; b < nbatch; b++) {
       size_t off = b * batchSize;
       // 不包含
@@ -280,23 +282,46 @@ class LlbTrainer {
       }
       actBatch += 1;
       std::vector<Tensor> logits = model->forward(examples);
-      if (all_logits.empty()) {
-        all_logits.resize(logits.size());
+      if (inbatch) {
+        std::vector<float> tevals;
+        auto tloss = model->CalcLoss(examples, logits, tevals, testTargets);
+        if (evals.empty()) {
+          evals.insert(evals.begin(), tevals.begin(), tevals.end());
+        } else {
+          CHECK_EQ(tevals.size(), evals.size());
+          for (size_t i = 0; i < tevals.size(); i++) {
+            evals[i] += tevals[i];
+          }
+        }
+        testLoss += ((Tensor)tloss).item().to<float>();
       } else {
-        CHECK_EQ(all_logits.size(), logits.size());
+        if (all_logits.empty()) {
+          all_logits.resize(logits.size());
+        } else {
+          CHECK_EQ(all_logits.size(), logits.size());
+        }
+        for (size_t i = 0; i < logits.size(); i++) {
+          all_logits[i].push_back(logits[i].to(torch::kCPU));
+        }
       }
-      for (size_t i = 0; i < logits.size(); i++) {
-        all_logits[i].push_back(logits[i].to(torch::kCPU));
+    }  // end for batch
+
+    if (inbatch) {
+      for (size_t i = 0; i < evals.size(); i++) {
+        evals[i] /= static_cast<float>(actBatch + 1e-10);
       }
+      testLoss = testLoss / static_cast<float>(actBatch + 1e-10);
+    } else {
+      std::vector<Tensor> packed_logits;
+      for (size_t i = 0; i < all_logits.size(); i++) {
+        Tensor logits = torch::cat(all_logits[i], 0);
+        CHECK_EQ(logits.size(0), static_cast<int>(total));
+        packed_logits.push_back(logits);
+      }
+      auto tloss =
+          model->CalcLoss(testDatas, packed_logits, evals, testTargets);
+      testLoss = ((Tensor)tloss).item().to<float>();
     }
-    std::vector<Tensor> packed_logits;
-    for (size_t i = 0; i < all_logits.size(); i++) {
-      Tensor logits = torch::cat(all_logits[i], 0);
-      CHECK_EQ(logits.size(0), static_cast<int>(total));
-      packed_logits.push_back(logits);
-    }
-    auto tloss = model->CalcLoss(testDatas, packed_logits, evals, testTargets);
-    testLoss = ((Tensor)tloss).item().to<float>();
     return testLoss;
   }
 

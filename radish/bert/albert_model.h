@@ -17,7 +17,7 @@ class TORCH_API ALBertModelImpl : public train::LlbModel {
                                       const Tensor &target = {}) override;
 
   std::vector<Tensor> forward(std::vector<Tensor> inputs) override;
-
+  bool EvalInBatch() const override;
   BertOptions options;
   BertModel bert = nullptr;
   LayerNorm laynorm = nullptr;
