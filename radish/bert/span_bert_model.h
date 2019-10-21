@@ -10,8 +10,8 @@
  */
 #pragma once
 
-#include "radish/train/llb_model.h"
 #include "radish/layers/layer_norm.h"
+#include "radish/train/llb_model.h"
 #include "radish/transformer/transformer_encoder.h"
 namespace radish {
 using Tensor = torch::Tensor;
@@ -42,13 +42,11 @@ class TORCH_API SpanBertModelImpl : public train::LlbModel {
             SpanBertOptions(n_src_vocab, len_max_seq, d_word_vec)) {}
   explicit SpanBertModelImpl(SpanBertOptions options);
 
-  Tensor CalcLoss(const std::vector<Tensor>& examples,
-                                      const Tensor& logits,
-                                      std::vector<float>& evals,
-                                      const Tensor& target = {},
-                                      bool train = true) override;
+  Tensor CalcLoss(const std::vector<Tensor>& examples, const std::vector<Tensor>& logits,
+                  std::vector<float>& evals,
+                  const Tensor& target = {}) override;
 
-  Tensor forward(std::vector<Tensor> inputs) override;
+  std::vector<Tensor> forward(std::vector<Tensor> inputs) override;
 
   SpanBertOptions options;
   TransformerEncoder encoder = nullptr;

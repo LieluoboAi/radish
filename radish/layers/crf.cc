@@ -27,11 +27,11 @@ CRFImpl::CRFImpl(CRFOptions options_) : options(options_) { reset(); }
 
 void CRFImpl::reset() {
   transitions = register_parameter(
-      "transitions", torch::empty({options.num_tag_, options.num_tag_}));
+      "transitions", torch::empty({options.num_tag(), options.num_tag()}));
   start_transition =
-      register_parameter("start_transition", torch::empty({options.num_tag_}));
+      register_parameter("start_transition", torch::empty({options.num_tag()}));
   end_transition =
-      register_parameter("end_transition", torch::empty({options.num_tag_}));
+      register_parameter("end_transition", torch::empty({options.num_tag()}));
   torch::NoGradGuard guard;
   transitions.normal_(-0.1, 0.1);
   start_transition.uniform_(-0.1, 0.1);
@@ -78,7 +78,7 @@ void CRFImpl::_validate(const Tensor& mask, const Tensor& emissions,
     CHECK_EQ(tags.size(1), emissions.size(1));
   }
   CHECK(emissions.dim() == 3);
-  CHECK_EQ(emissions.size(2), options.num_tag_);
+  CHECK_EQ(emissions.size(2), options.num_tag());
   CHECK(mask.select(0, 0).all().item().to<bool>());
 }
 Tensor CRFImpl::_compute_score(const Tensor& tags, const Tensor& emissions,

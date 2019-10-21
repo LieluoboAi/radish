@@ -25,11 +25,6 @@ matrix:
         - cd $TRAVIS_BUILD_DIR
         - |
           bazel --host_jvm_args=-Xmx500m --host_jvm_args=-Xms500m \
-           build --noshow_progress --noshow_loading_progress   //radish/bert:train_albert_main
-        - |
-          bazel --host_jvm_args=-Xmx500m --host_jvm_args=-Xms500m \
-           build --noshow_progress --noshow_loading_progress    //radish/bert:train_span_bert_main
-        - |
-          bazel --host_jvm_args=-Xmx500m --host_jvm_args=-Xms500m \
-           build --noshow_progress --noshow_loading_progress    //radish/bert/finetune:train_qs_main
+           build --noshow_progress --noshow_loading_progress   //radish/...
+    
  

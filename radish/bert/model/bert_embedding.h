@@ -50,6 +50,7 @@ class TORCH_API BertEmbeddingImpl
   // should register as name  'LayerNorm'
   LayerNorm layer_norm = nullptr;
   torch::nn::Dropout dropout = nullptr;
+  torch::nn::Linear embedding_to_hidden_proj = nullptr;
 };
 
 TORCH_MODULE(BertEmbedding);

@@ -38,9 +38,13 @@ struct TORCH_API BertOptions {
   TORCH_ARG(double, ln_eps) = 1e-12;
   TORCH_ARG(double, init_range) = 0.02;
   TORCH_ARG(double, dropout) = 0.1;
+  TORCH_ARG(int64_t, d_wordvec) = 128;
+  TORCH_ARG(bool, need_factor_embedding) = false;
+  TORCH_ARG(int64_t, repeat_stochastic_layers) = 0;
 
  public:
   static BertOptions kBertBaseOpts;
+  static BertOptions kMiniAlbertOpts;
 };
 
 }  // namespace radish

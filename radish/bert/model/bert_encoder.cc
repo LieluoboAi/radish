@@ -14,7 +14,7 @@
 namespace radish {
 
 BertEncoderImpl::BertEncoderImpl(const BertOptions& options_)
-    : options(options_) {
+    : options(options_), gen_(std::random_device{}()) {
   reset();
 }
 void BertEncoderImpl::reset() {
@@ -28,14 +28,33 @@ std::vector<Tensor> BertEncoderImpl::forward(Tensor hidden_states,
                                              Tensor attention_mask,
                                              Tensor head_mask) {
   std::vector<Tensor> enc_slf_attn_list;
-  for (auto i = 0; i < options.num_layers(); i++) {
-    auto elayer = layer->ptr<BertLayerImpl>(i);
-    std::vector<Tensor> rets =
-        elayer->forward(hidden_states, attention_mask, head_mask);
-    hidden_states = rets[0];
-    const auto& enc_slf_attn = rets[1];
-    if (options.output_attentions()) {
-      enc_slf_attn_list.push_back(enc_slf_attn);
+  if (is_training() && options.repeat_stochastic_layers() > 1) {
+    std::uniform_real_distribution<> randomP(0, 1.0);
+    float randomness =
+        1.0 / static_cast<float>(options.repeat_stochastic_layers());
+    for (auto i = 0; i < options.num_layers(); i++) {
+      auto elayer = layer->ptr<BertLayerImpl>(i);
+      for (int j = 0; j < options.repeat_stochastic_layers(); j++) {
+        if (randomP(gen_) <= randomness) {
+          auto rets = elayer->forward(hidden_states, attention_mask, head_mask);
+          hidden_states = rets[0];
+          const auto& enc_slf_attn = rets[1];
+          if (options.output_attentions()) {
+            enc_slf_attn_list.push_back(enc_slf_attn);
+          }
+        }
+      }
+    }
+  } else {
+    for (auto i = 0; i < options.num_layers(); i++) {
+      auto elayer = layer->ptr<BertLayerImpl>(i);
+      std::vector<Tensor> rets =
+          elayer->forward(hidden_states, attention_mask, head_mask);
+      hidden_states = rets[0];
+      const auto& enc_slf_attn = rets[1];
+      if (options.output_attentions()) {
+        enc_slf_attn_list.push_back(enc_slf_attn);
+      }
     }
   }
   if (options.output_attentions()) {

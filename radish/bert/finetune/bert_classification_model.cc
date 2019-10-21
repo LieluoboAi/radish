@@ -60,12 +60,12 @@ static void debug_(std::string title, const Tensor& t) {
   spdlog::info("{}  max={},min={}, mean={}", title, maxv, minv, meanv);
 }
 Tensor BertClassificationModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
-                                             const Tensor& logits,
+                                             const std::vector<Tensor>& logits,
                                              std::vector<float>& evals,
-                                             const Tensor& target, bool train) {
-  Tensor loss = calc_loss_(logits, target);
-  if (!train) {
-    float accuracy = calc_accuracy_(logits, target).item().to<float>();
+                                             const Tensor& target) {
+  Tensor loss = calc_loss_(logits[0], target);
+  if (!is_training()) {
+    float accuracy = calc_accuracy_(logits[0], target).item().to<float>();
     evals.push_back(accuracy);
   }
   return loss;
@@ -76,7 +76,7 @@ Tensor BertClassificationModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
  *        1 - types
  *
  */
-Tensor BertClassificationModelImpl::forward(std::vector<Tensor> inputs) {
+std::vector<Tensor> BertClassificationModelImpl::forward(std::vector<Tensor> inputs) {
   CHECK(inputs.size() >= 2);
   // 0 - for seq
   Tensor& src_seq = inputs[0];
@@ -85,7 +85,7 @@ Tensor BertClassificationModelImpl::forward(std::vector<Tensor> inputs) {
   Tensor& types = inputs[1];
   auto rets = bert(src_seq, mask, types);
   Tensor hiddens = rets[1];  // pooled
-  return final_proj(hiddens);
+  return {final_proj(hiddens)};
 }
 
 }  // namespace radish

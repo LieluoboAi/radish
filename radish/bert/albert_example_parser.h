@@ -19,8 +19,8 @@ class SentencePieceProcessor;
 }  // namespace sentencepiece
 
 namespace radish {
-// 200 -1
 
+class TextTokenizer;
 struct Ex {
   explicit Ex(int maxLen) : x(maxLen, 0), types(maxLen,0) {}
   std::vector<int> x;
@@ -40,9 +40,9 @@ class ALBertExampleParser : public radish::data::ExampleParser {
                 data::LlbExample& example) override;
 
  private:
-  bool _mask_seq(int maskId, int seqId, int totalVocabSize, int len, Ex& ex);
+  bool _mask_seq(int maskId, int seqId, int clsId, int len, Ex& ex);
   void _select_a_b_ids(std::vector<int>& aids, std::vector<int>& bids);
-  std::shared_ptr<sentencepiece::SentencePieceProcessor> spp_;
+  std::shared_ptr<TextTokenizer> tokenizer_;
   std::mt19937 gen_;
   std::discrete_distribution<> len_dist_;
   std::uniform_int_distribution<> random_id_dist_;

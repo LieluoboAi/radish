@@ -35,7 +35,7 @@ class SentencePieceTokenizer
   int SepId() const override;
   int ClsId() const override;
   int UnkId() const override;
-
+  int TotalSize() const override;
   static std::string kUnkToken;
   static std::string kMaskToken;
   static std::string kSepToken;

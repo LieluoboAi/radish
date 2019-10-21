@@ -20,11 +20,10 @@ class TORCH_API BertClassificationModelImpl : public train::LlbModel {
  public:
   BertClassificationModelImpl(BertOptions options, int n_class);
 
-  Tensor CalcLoss(const std::vector<Tensor> &examples, const Tensor &logits,
-                  std::vector<float> &evals, const Tensor &target = {},
-                  bool train = true) override;
+  Tensor CalcLoss(const std::vector<Tensor> &examples, const std::vector<Tensor> &logits,
+                  std::vector<float> &evals, const Tensor &target = {}) override;
 
-  Tensor forward(std::vector<Tensor> inputs) override;
+  std::vector<Tensor> forward(std::vector<Tensor> inputs) override;
   bool LoadFromPretrain(std::string path) override;
   BertOptions options;
   int n_class;

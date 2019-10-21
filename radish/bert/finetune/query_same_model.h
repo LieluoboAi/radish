@@ -39,12 +39,11 @@ class TORCH_API QuerySameModelImpl : public train::LlbModel {
   explicit QuerySameModelImpl(QuerySameOptions options);
 
   Tensor CalcLoss(const std::vector<Tensor> &examples,
-                                      const Tensor &logits,
+                                      const std::vector<Tensor> &logits,
                                       std::vector<float>& evals,
-                                      const Tensor &target = {},
-                                      bool train = true) override;
+                                      const Tensor &target = {}) override;
 
-  Tensor forward(std::vector<Tensor> inputs) override;
+  std::vector<Tensor> forward(std::vector<Tensor> inputs) override;
 
   QuerySameOptions options;
   TransformerEncoder encoder = nullptr;

@@ -49,6 +49,9 @@ int SentencePieceTokenizer::SepId() const { return spp_->GetPieceSize() + 2; }
 int SentencePieceTokenizer::ClsId() const { return spp_->GetPieceSize(); }
 int SentencePieceTokenizer::UnkId() const { return spp_->GetPieceSize() + 3; }
 
+int SentencePieceTokenizer::TotalSize() const{
+  return spp_->GetPieceSize() + 4;
+}
 int SentencePieceTokenizer::Word2Id(std::string s) const {
   if (s == kPadToken) {
     return 0;

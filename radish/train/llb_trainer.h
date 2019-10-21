@@ -192,9 +192,9 @@ class LlbTrainer {
           examples.push_back(torch::stack(batchDatas[j], 0).to(device));
         }
         steps += 1;
-        Tensor logits = model->forward(examples);
+        std::vector<Tensor> logits = model->forward(examples);
         evals.clear();
-        auto loss = model->CalcLoss(examples, logits, evals, target, true);
+        auto loss = model->CalcLoss(examples, logits, evals, target);
         (void)evals;  // suppress warning
         loss.backward();
         update_batch += 1;
@@ -263,7 +263,7 @@ class LlbTrainer {
     size_t total = testDatas[0].size(0);
     size_t nbatch = (total - 1) / batchSize + 1;
     size_t actBatch = 0;
-    std::vector<Tensor> all_logits;
+    std::vector<std::vector<Tensor>> all_logits;
     for (size_t b = 0; b < nbatch; b++) {
       size_t off = b * batchSize;
       // 不包含
@@ -279,12 +279,23 @@ class LlbTrainer {
         examples.push_back(select_range_(testDatas[i], off, end).to(device));
       }
       actBatch += 1;
-      Tensor logits = model->forward(examples);
-      all_logits.push_back(logits.to(torch::kCPU));
+      std::vector<Tensor> logits = model->forward(examples);
+      if (all_logits.empty()) {
+        all_logits.resize(logits.size());
+      } else {
+        CHECK_EQ(all_logits.size(), logits.size());
+      }
+      for (size_t i = 0; i < logits.size(); i++) {
+        all_logits[i].push_back(logits[i].to(torch::kCPU));
+      }
     }
-    Tensor logits = torch::cat(all_logits, 0);
-    CHECK_EQ(logits.size(0), static_cast<int>(total));
-    auto tloss = model->CalcLoss(testDatas, logits, evals, testTargets, false);
+    std::vector<Tensor> packed_logits;
+    for (size_t i = 0; i < all_logits.size(); i++) {
+      Tensor logits = torch::cat(all_logits[i], 0);
+      CHECK_EQ(logits.size(0), static_cast<int>(total));
+      packed_logits.push_back(logits);
+    }
+    auto tloss = model->CalcLoss(testDatas, packed_logits, evals, testTargets);
     testLoss = ((Tensor)tloss).item().to<float>();
     return testLoss;
   }

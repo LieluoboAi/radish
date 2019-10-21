@@ -1,4 +1,4 @@
 {
-   "tokenizer_vocab": "/e/data/bert-base-chinese/vocab.txt",
+   "tokenizer_vocab": "radish/bert/data/vocab.txt",
    "tokenizer_class": "radish::BertTokenizer"
 }

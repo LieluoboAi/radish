@@ -87,6 +87,7 @@ int BertTokenizer::SepId() const { return token_2_id_map_.at(kSepToken); }
 int BertTokenizer::ClsId() const { return token_2_id_map_.at(kClsToken); }
 int BertTokenizer::UnkId() const { return token_2_id_map_.at(kUnkToken); }
 
+int BertTokenizer::TotalSize() const { return tokens_.size(); }
 void BertTokenizer::max_seg_(std::string s, std::vector<int>& results) {
   int end = s.size();
   int start = 0;

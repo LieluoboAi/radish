@@ -82,12 +82,12 @@ SpanBertModelImpl::SpanBertModelImpl(SpanBertOptions options_)
 }
 
 Tensor SpanBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
-                                   const Tensor& logits,
+                                   const std::vector<Tensor>& logits,
                                    std::vector<float>& evals,
-                                   const Tensor& target, bool train) {
-  Tensor maskedOutput = batch_select(logits, inputs[1]);
-  Tensor spanLeftOutput = batch_select(logits, inputs[2]);
-  Tensor spanRightOutput = batch_select(logits, inputs[3]);
+                                   const Tensor& target) {
+  Tensor maskedOutput = batch_select(logits[0], inputs[1]);
+  Tensor spanLeftOutput = batch_select(logits[0], inputs[2]);
+  Tensor spanRightOutput = batch_select(logits[0], inputs[3]);
   Tensor maskPreds = proj(maskedOutput);
   Tensor mlm_loss = calc_loss_(maskPreds, target);
   Tensor spanPos = encoder->pos_emb(inputs[1]);
@@ -96,7 +96,7 @@ Tensor SpanBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
   span_hidden = laynorm(torch::gelu(span_hidden));
   spanPreds = proj(span_hidden);
   Tensor span_loss = calc_loss_(spanPreds, target);
-  if (!train) {
+  if (!is_training()) {
     float mlm_accuracy = calc_accuracy_(maskPreds, target).item().to<float>();
     evals.push_back(mlm_accuracy);
   }
@@ -110,7 +110,7 @@ Tensor SpanBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
  *        3 - span_right
  *
  */
-Tensor SpanBertModelImpl::forward(std::vector<Tensor> inputs) {
+std::vector<Tensor> SpanBertModelImpl::forward(std::vector<Tensor> inputs) {
   CHECK(inputs.size() >= 4);
   // 0 - for seq
   Tensor& src_seq = inputs[0];
@@ -121,7 +121,7 @@ Tensor SpanBertModelImpl::forward(std::vector<Tensor> inputs) {
   // should be same device as src seq
   pos_seq = pos_seq.repeat({src_seq.size(0), 1}).to(src_seq.device());
   auto rets = encoder(src_seq, pos_seq);
-  return rets[0];
+  return {rets[0]};
 }
 
 }  // namespace radish

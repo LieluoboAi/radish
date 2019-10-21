@@ -31,6 +31,7 @@ class TextTokenizer {
   virtual int SepId() const = 0;
   virtual int ClsId() const = 0;
   virtual int UnkId() const = 0;
+  virtual int TotalSize()  const =0;
 };
 
 class TextTokenizerFactory {

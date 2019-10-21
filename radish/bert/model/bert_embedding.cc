@@ -21,9 +21,12 @@ BertEmbeddingImpl::BertEmbeddingImpl(const BertOptions& options_)
 }
 
 void BertEmbeddingImpl::reset() {
+  int emdsz = options.hidden_size();
+  if (options.need_factor_embedding()) {
+    emdsz = options.d_wordvec();
+  }
   word_embeddings =
-      Embedding(EmbeddingOptions(options.n_vocab(), options.hidden_size())
-                    .padding_idx(0));
+      Embedding(EmbeddingOptions(options.n_vocab(), emdsz).padding_idx(0));
   register_module("word_embeddings", word_embeddings);
   position_embeddings =
       Embedding(EmbeddingOptions(options.max_pos(), options.hidden_size()));
@@ -35,17 +38,26 @@ void BertEmbeddingImpl::reset() {
   register_module("LayerNorm", layer_norm);
   dropout = torch::nn::Dropout(options.dropout());
   register_module("dropout", dropout);
+  if (options.need_factor_embedding()) {
+    embedding_to_hidden_proj =
+        torch::nn::Linear(torch::nn::LinearOptions(emdsz, options.hidden_size())
+                              .with_bias(false));
+    register_module("embedding_to_hidden_proj", embedding_to_hidden_proj);
+  }
   torch::NoGradGuard guard;
   torch::nn::init::normal_(word_embeddings->weight, 0, options.init_range());
   torch::nn::init::normal_(position_embeddings->weight, 0,
                            options.init_range());
   torch::nn::init::normal_(token_type_embeddings->weight, 0,
                            options.init_range());
+  if (options.need_factor_embedding()) {
+    torch::nn::init::normal_(embedding_to_hidden_proj->weight, 0,
+                             options.init_range());
+  }
 }
 
 /// Pretty prints the `BertEmbedding` module into the given `stream`.
-void BertEmbeddingImpl::pretty_print(std::ostream& stream) const {
-}
+void BertEmbeddingImpl::pretty_print(std::ostream& stream) const {}
 
 Tensor BertEmbeddingImpl::forward(Tensor inputIds, Tensor typeIds,
                                   Tensor posIds) {
@@ -58,9 +70,13 @@ Tensor BertEmbeddingImpl::forward(Tensor inputIds, Tensor typeIds,
   if (typeIds.numel() == 0) {
     typeIds = torch::zeros_like(inputIds);
   }
-  auto output = word_embeddings(inputIds)
-                    .add(position_embeddings(posIds))
-                    .add(token_type_embeddings(typeIds));
+  auto output = word_embeddings(inputIds);
+  if (options.need_factor_embedding()) {
+    output = embedding_to_hidden_proj(output);
+  }
+  output = output.add(position_embeddings(posIds))
+               .add(token_type_embeddings(typeIds));
+
   output = layer_norm(output);
   output = dropout(output);
   return output;

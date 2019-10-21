@@ -10,8 +10,8 @@
  */
 #pragma once
 
-
 #include <cstddef>
+#include <random>
 #include <vector>
 
 #include "radish/bert/model/bert_attention.h"
@@ -26,22 +26,23 @@
 namespace radish {
 using Tensor = torch::Tensor;
 
-class TORCH_API BertEncoderImpl
-    : public torch::nn::Cloneable<BertEncoderImpl> {
+class TORCH_API BertEncoderImpl : public torch::nn::Cloneable<BertEncoderImpl> {
  public:
   explicit BertEncoderImpl(const BertOptions& options_);
   void reset() override;
   std::vector<Tensor> forward(Tensor hidden_states, Tensor attention_mask = {},
-                 Tensor head_mask = {});
+                              Tensor head_mask = {});
 
   BertOptions options;
   torch::nn::ModuleList layer = nullptr;
+
+ private:
+  std::mt19937 gen_;
 };
 
 TORCH_MODULE(BertEncoder);
 
-class TORCH_API BertPoolerImpl
-    : public torch::nn::Cloneable<BertPoolerImpl> {
+class TORCH_API BertPoolerImpl : public torch::nn::Cloneable<BertPoolerImpl> {
  public:
   explicit BertPoolerImpl(const BertOptions& options_);
   void reset() override;
@@ -52,6 +53,5 @@ class TORCH_API BertPoolerImpl
 };
 
 TORCH_MODULE(BertPooler);
-
 
 }  // namespace radish

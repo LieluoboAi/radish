@@ -61,57 +61,53 @@ static Tensor calc_accuracy_(const Tensor& pred, const Tensor& target,
   }
   return correct.toType(torch::kFloat32).mean();
 }
-ALBertOptions::ALBertOptions(int64_t n_src_vocab) : n_src_vocab_(n_src_vocab) {}
 
-ALBertModelImpl::ALBertModelImpl(ALBertOptions options_) : options(options_) {
-  encoder = TransformerEncoder(
-      TransformerEncoderOptions(
-          options.n_src_vocab(), options.len_max_seq(), options.d_word_vec(),
-          options.n_layers(), options.n_head(), options.d_k(), options.d_v(),
-          options.d_model(), options.d_inner(), options.dropout())
-          .need_factor_embedding(true));
-  register_module("transformer_encoder", encoder);
-  vocab_proj = torch::nn::Linear(options.d_word_vec(), options.n_src_vocab());
+ALBertModelImpl::ALBertModelImpl(BertOptions options_) : options(options_) {
+  bert = BertModel(options);
+  register_module("bert", bert);
+  vocab_proj = torch::nn::Linear(options.d_wordvec(), options.n_vocab());
   register_module("vocab_proj", vocab_proj);
-  order_proj = torch::nn::Linear(options.d_model(), 2);
+  order_proj = torch::nn::Linear(options.hidden_size(), 2);
   register_module("order_proj", order_proj);
-  laynorm = LayerNorm(options.d_word_vec());
+  laynorm = LayerNorm(options.d_wordvec(),options.ln_eps());
   register_module("laynorm", laynorm);
   torch::NoGradGuard guard;
-  vocab_proj->weight = encoder->src_word_emb->weight;
-  torch::nn::init::xavier_normal_(order_proj->weight);
+  vocab_proj->weight = bert->embeddings->word_embeddings->weight;
+  torch::nn::init::normal_(order_proj->weight, 0, options.init_range());
+  torch::nn::init::constant_(vocab_proj->bias,0);
+  torch::nn::init::constant_(order_proj->bias,0);
 }
 
 Tensor ALBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
-                                 const Tensor& logits,
+                                 const std::vector<Tensor>& logits,
                                  std::vector<float>& evals,
-                                 const Tensor& target, bool train) {
-  Tensor maskedOutput = batch_select(logits, inputs[1]);
+                                 const Tensor& target) {
+  Tensor maskedOutput = batch_select(logits[0], inputs[1]);
   int bsz = maskedOutput.size(0);
   int numTargets = maskedOutput.size(1);
   int hidden = maskedOutput.size(2);
   Tensor maskPreds = maskedOutput.view({-1, hidden})
-                         .mm(encoder->embedding_to_hidden_proj->weight)
+                         .mm(bert->embeddings->embedding_to_hidden_proj->weight)
                          .view({bsz, numTargets, -1});
   maskPreds = laynorm(maskPreds);
   maskPreds = vocab_proj(maskPreds);
   Tensor mlm_loss = calc_loss_(maskPreds, target, true);
-  if (!train) {
+  if (!is_training()) {
     float mlm_accuracy =
         calc_accuracy_(maskPreds, target, true).item().to<float>();
     evals.push_back(mlm_accuracy);
   }
 
-  Tensor firstTokenRepr = logits.select(1, 0);
+  Tensor firstTokenRepr = logits[1];
   Tensor orderPreds = order_proj(firstTokenRepr);
   //  inputs[3] is the ordered target
   Tensor order_loss = calc_loss_(orderPreds, inputs[3], false);
-  if (!train) {
+  if (!is_training()) {
     float order_accuracy =
         calc_accuracy_(orderPreds, inputs[3], false).item().to<float>();
     evals.push_back(order_accuracy);
   }
-  return mlm_loss.add_(order_loss);
+  return mlm_loss.add(order_loss);
 }
 
 /**
@@ -121,21 +117,14 @@ Tensor ALBertModelImpl::CalcLoss(const std::vector<Tensor>& inputs,
  *        3- ordered
  *
  */
-Tensor ALBertModelImpl::forward(std::vector<Tensor> inputs) {
+std::vector<Tensor> ALBertModelImpl::forward(std::vector<Tensor> inputs) {
   CHECK(inputs.size() >= 4);
   // 0 - for seq
   Tensor& src_seq = inputs[0];
-  auto seqLen = src_seq.size(1);
-  Tensor pos_seq = torch::arange(
-      0, seqLen,
-      torch::TensorOptions().dtype(torch::kInt64).requires_grad(false));
-  // should be same device as src seq
-  pos_seq = pos_seq.repeat({src_seq.size(0), 1}).to(src_seq.device());
-
+  Tensor mask = src_seq.ne(0).toType(torch::kFloat32).to(src_seq.device());
   // types
   Tensor& types = inputs[2];
-  auto rets = encoder(src_seq, pos_seq, types);
-  return rets[0];
+  return bert(src_seq, mask, types);
 }
 
 }  // namespace radish

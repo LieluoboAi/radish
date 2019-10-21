@@ -28,11 +28,11 @@ cc_library(
         "albert_example_parser.h",
     ],
     deps = [
+        "//radish/bert:bert_tokenizer",
         "//radish/train/data:example_parser",
         "//radish/utils:logging",
+        "//radish/utils:sentencepiece_tokenizer",
         "//third_party:pytorch",
-        "@sentencepiece//sentencepiece:error",
-        "@sentencepiece//sentencepiece:sentencepiece_processor",
     ],
 )
 
@@ -60,8 +60,8 @@ cc_library(
         "albert_model.h",
     ],
     deps = [
+        "//radish/bert/model:bert_model",
         "//radish/train:llb_model",
-        "//radish/transformer:transformer_encoder",
         "//third_party:pytorch",
     ],
 )

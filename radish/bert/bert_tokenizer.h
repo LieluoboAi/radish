@@ -30,7 +30,7 @@ class BertTokenizer : public TextTokenizer,
   int SepId() const override;
   int ClsId() const override;
   int UnkId() const override;
-
+  int TotalSize() const override;
  private:
   void max_seg_(std::string s, std::vector<int>& results);
   void load_vocab_(std::string path);
