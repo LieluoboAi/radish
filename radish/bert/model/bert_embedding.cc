@@ -74,8 +74,8 @@ Tensor BertEmbeddingImpl::forward(Tensor inputIds, Tensor typeIds,
   if (options.need_factor_embedding()) {
     output = embedding_to_hidden_proj(output);
   }
-  output = output.add(position_embeddings(posIds))
-               .add(token_type_embeddings(typeIds));
+  output.add_(position_embeddings(posIds))
+               .add_(token_type_embeddings(typeIds));
 
   output = layer_norm(output);
   output = dropout(output);

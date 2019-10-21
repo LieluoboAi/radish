@@ -69,7 +69,7 @@ std::vector<Tensor> BertSelfAttentionImpl::forward(Tensor hidden_states,
   //  attention scores.
   auto attention_scores =
       torch::matmul(query_layer, key_layer.transpose(-1, -2));
-  attention_scores = attention_scores / std::sqrt(attention_head_size_);
+  attention_scores = attention_scores.div_(std::sqrt(attention_head_size_));
   if (attention_mask.numel() > 0) {
     // Apply the attention mask is (precomputed for all layers in BertModel
     // forward() function)
