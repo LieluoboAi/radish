@@ -39,19 +39,16 @@ Radish可以让你的模型从训练到部署都使用相同C++代码库， 借�
 
 
 
-# 关于ALBERT
+# 使用Goolge BERT  Base Chinese 预训练模型
 
-样本格式： TXT格式，一行一个样本，把换行换成\t或者空格
-
-运行训练（示例）：
-
-```bash
-LD_LIBRARY_PATH=/data/chenyw/libtorch_gpu/lib ./train_albert_main --train_data_path /data/chenyw/albert/data/part0,/data/chenyw/albert/data/part1  --test_data_path /data/chenyw/albert/data/valid0  --warmup_steps 10000 --parser_conf_path parser_conf.json --eval_every 5000 -learning_rate 0.0003 --batch_size 460
+目前Radish 内置一个兼容BERT实现，可以载入Bert base Chinese模型，模型文件下载
+百度网盘：
 ```
-更多参数可运行加--help参数打印出来参考
+链接:  https://pan.baidu.com/s/1Nlyvw41SfmNzQwhorfQg3g  
+提取码:  9m55 
+```
+radish/bert/finetune/train_bert_cls_finetune.cc 是一个finetune的示例，使用bert base chinese, batch size=32, lr=0.00005 1个epoch,在xnli数据测试集上达到95.94%
 
-论文给出的实验报告，可以看出主要是hidden size在起作用， 共享参数反而使得效果打折扣。
-所以本示例实现没有加入参数共享。可自行更改对应代码， 也欢迎pull request.
 
 
 # 参考
