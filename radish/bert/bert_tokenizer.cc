@@ -17,7 +17,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
-#include "external/utfcpp/source/utf8.h"
+#include "source/utf8.h"
 #include "radish/utils/logging.h"
 
 namespace radish {
