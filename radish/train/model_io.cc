@@ -276,10 +276,10 @@ void LoadStateDictJson(std::shared_ptr<torch::nn::Module> module,
     for (auto& val : new_params) {
       auto name = val.key();
       // fix naming
-      auto pos = name.find("running_var");
-      if (pos != std::string::npos) {
-        name.replace(pos, 11, "running_variance");
-      }
+      // auto pos = name.find("running_var");
+      // if (pos != std::string::npos) {
+      //   name.replace(pos, 11, "running_variance");
+      // }
 
       auto* t = params.find(name);
       if (t != nullptr) {
@@ -292,7 +292,7 @@ void LoadStateDictJson(std::shared_ptr<torch::nn::Module> module,
                        val.value().sizes());
           t->copy_(val.value());
         } else {
-          spdlog::info("{}   parameter not found!", name);
+          spdlog::info("{}   buffer  not found!", name);
         }
       }
     }
