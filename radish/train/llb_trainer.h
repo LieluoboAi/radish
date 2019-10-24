@@ -68,6 +68,7 @@ class LlbTrainer {
       }
       device = torch::kCUDA;
     }
+    torch::NoGradGuard guard;
     // log目录初始化
     logdir_init_(model, std::string(), device);
     model->to(device);
