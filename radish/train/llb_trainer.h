@@ -78,6 +78,7 @@ class LlbTrainer {
       CHECK(ifs) << "can't read " << parserConfPath << " ?";
       CHECK(reader.parse(ifs, parserConf)) << "config file can't be parsed!";
     }
+    parserConf["parser.preload"]=0;
     auto trainLoader = torch::data::make_data_loader<DataSamplerT>(
         std::move(DatasetT(datasetPath, parserConf)),
         torch::data::DataLoaderOptions()
