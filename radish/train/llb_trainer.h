@@ -114,7 +114,7 @@ class LlbTrainer {
       for (int i = 0; i < logits.size(0); i++) {
         std::vector<float> row;
         for (int j = 0; j < logits.size(1); j++) {
-          row.push_back(logits[i][i].item().to<float>());
+          row.push_back(logits[i][j].item().to<float>());
         }
         submiter->SubmitOneRow(row);
         nexs += 1;
