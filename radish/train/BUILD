@@ -24,6 +24,19 @@ cc_library(
     ],
 )
 
+
+cc_library(
+    name = "benchmark_submiter",
+    srcs = [
+        "benchmark_submiter.h",
+    ],
+    deps = [
+        "//radish/utils:logging",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:optional",
+    ],
+)
+
 cc_library(
     name = "model_io",
     srcs = [
@@ -44,6 +57,7 @@ cc_library(
     ],
     deps = [
         ":progress_reporter",
+        ":benchmark_submiter",
         ":llb_model",
         ":model_io",
         "//radish/utils:logging",
