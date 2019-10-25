@@ -17,8 +17,8 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
-#include "source/utf8.h"
 #include "radish/utils/logging.h"
+#include "source/utf8.h"
 
 namespace radish {
 
@@ -133,8 +133,9 @@ std::string BertTokenizer::Id2Word(int id) const {
 }
 
 void BertTokenizer::load_vocab_(std::string path) {
-  std::ifstream inp(path);
-  CHECK(inp) << "open vocal for read failed!" << path;
+  std::ifstream inp;
+  inp.open(path);
+  CHECK(!inp.fail()) << "open vocal for read failed!" << path;
   std::string line;
   int idx = 0;
   while (std::getline(inp, line)) {
