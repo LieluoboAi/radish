@@ -134,7 +134,12 @@ std::string BertTokenizer::Id2Word(int id) const {
 
 void BertTokenizer::load_vocab_(std::string path) {
   std::ifstream inp;
-  inp.open(path);
+  inp.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+  try {
+    inp.open(path);
+  } catch (std::system_error& e) {
+    VLOG(0) << e.code().message();
+  }
   CHECK(!inp.fail()) << "open vocal for read failed!" << path;
   std::string line;
   int idx = 0;
