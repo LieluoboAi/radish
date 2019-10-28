@@ -36,7 +36,6 @@ class BertTokenizer : public TextTokenizer,
   void load_vocab_(std::string path);
   UString _basic_tokenize(UString text);
   UString _clean(UString text);
-  UString _strip_accents(UString text);
   std::unordered_map<std::string, int> token_2_id_map_;
   std::vector<std::string> tokens_;
   static std::string kUnkToken;

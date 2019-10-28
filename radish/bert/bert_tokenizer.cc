@@ -72,7 +72,6 @@ std::vector<int> BertTokenizer::Encode(std::string text) {
   UString unicodes;
   utf8::utf8to16(text.c_str(), text.c_str() + text.size(),
                  std::back_inserter(unicodes));
-  unicodes = _strip_accents(unicodes);
   unicodes = _clean(unicodes);
   unicodes = _basic_tokenize(unicodes);
   std::string newtext;
@@ -228,7 +227,7 @@ UString BertTokenizer::_clean(UString text) {
   UString ret;
   for (size_t i = 0; i < len; i++) {
     uint16_t c = text[i];
-    if (c == 0 || c == 0xFFFD || _is_control(c)) {
+    if (c == 0 || c == 0xFFFD || _is_control(c) || utf8proc_category(c) == UTF8PROC_CATEGORY_MN) {
       continue;
     }
     if (_is_whitespace(c)) {
@@ -236,19 +235,6 @@ UString BertTokenizer::_clean(UString text) {
     } else {
       ret.append(1, c);
     }
-  }
-  return ret;
-}
-
-UString BertTokenizer::_strip_accents(UString text) {
-  size_t len = text.size();
-  UString ret;
-  for (size_t i = 0; i < len; i++) {
-    uint16_t c = text[i];
-    if (utf8proc_category(c) == UTF8PROC_CATEGORY_MN) {
-      continue;
-    }
-    ret.append(1, c);
   }
   return ret;
 }
