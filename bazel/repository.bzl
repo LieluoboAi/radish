@@ -256,3 +256,14 @@ def radish_repositories():
             "https://github.com/google/googletest/archive/release-1.10.0.tar.gz",
         ],
     )
+
+    _maybe(
+        http_archive,
+        name = "utf8proc",
+        build_file = "@com_lieluobo_radish//third_party:utf8proc.BUILD",
+        strip_prefix = "utf8proc-2.4.0",
+        sha256 = "b2e5d547c1d94762a6d03a7e05cea46092aab68636460ff8648f1295e2cdfbd7",
+        urls = [
+            "https://github.com/JuliaStrings/utf8proc/archive/v2.4.0.tar.gz",
+        ],
+    )

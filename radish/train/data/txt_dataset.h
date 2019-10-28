@@ -94,6 +94,9 @@ class TxtDataset : public torch::data::Dataset<TxtDataset<Parser>, LlbExample> {
     parser_.reset(new Parser());
     CHECK(parser_->Init(parserConf));
     int preload = parserConf.get("parser.preload", 1000).asInt();
+    if (preload == 0) {
+      spdlog::info("manually disabled preload!");
+    }
     std::vector<std::string> pathList = absl::StrSplit(pathstr, ",");
     int hint = preload / pathList.size();
     CHECK(pathList.size() < kMaxFiles)

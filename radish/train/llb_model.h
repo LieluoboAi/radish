@@ -45,6 +45,13 @@ class TORCH_API LlbModel : public ::torch::nn::Module {
    *
    **/
   virtual bool EvalInBatch() const { return false; }
+
+  // Benchmark用接口，给定样本，输出benchmark需要的数据，一般就是一个浮点数
+  // 如果输出为[batch , K]，那么最后用来benchmark的文件有batch行，每行K个数值
+  virtual Tensor Benchmark(std::vector<Tensor> inputs) {
+    auto rets = forward(inputs);
+    return rets[0];
+  }
 };
 
 }  // namespace train

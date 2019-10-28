@@ -111,6 +111,7 @@ cc_library(
         "//radish/utils:text_tokenizer",
         "@com_google_absl//absl/strings",
         "@utfcpp",
+        "@utf8proc",
     ],
     alwayslink = True,
 )

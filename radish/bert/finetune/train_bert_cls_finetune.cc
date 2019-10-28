@@ -19,6 +19,7 @@
 
 #include "radish/bert/finetune/bert_classification_model.h"
 #include "radish/bert/finetune/xnli_example_parser.h"
+#include "radish/train/benchmark_submiter.h"
 #include "radish/train/llb_trainer.h"
 #include "radish/train/progress_reporter.h"
 
@@ -36,6 +37,8 @@ ABSL_FLAG(int64_t, max_test_num, 0, "max test examples allowed");
 ABSL_FLAG(int32_t, eval_every, 1000,
           "every X steps , evaluate once for test loss");
 ABSL_FLAG(float, learning_rate, 0.0001, "the learning rate ");
+ABSL_FLAG(bool, benchmark_test, false,
+          "whether to do benchmark on test dataset");
 ABSL_FLAG(int32_t, warmup_steps, 1000, "the warmup steps");
 int main(int argc, char* argv[]) {
   // Passing params by value does NOT work correctly.
@@ -56,14 +59,21 @@ int main(int argc, char* argv[]) {
   radish::train::LlbTrainer<radish::XNLIExampleParser,
                             radish::BertClassificationModel, false, 10, true>
       trainner(logdir);
-  trainner.MainLoop(
-      model, trainDataPath, testDataPath, absl::GetFlag(FLAGS_learning_rate),
-      absl::GetFlag(FLAGS_batch_size), absl::GetFlag(FLAGS_eval_every),
-      &reporter, parserConfPath, 100 /** epoch */,
-      absl::GetFlag(FLAGS_warmup_steps), absl::GetFlag(FLAGS_max_test_num),
-      1 /** update per batchs */,
-      absl::GetFlag(FLAGS_pretrained_model_path) /**pretrained model path*/
-  );
+  if (absl::GetFlag(FLAGS_benchmark_test)) {
+    radish::train::FileBenchmarkSubmiter submiter(logdir + "/benchmark.txt");
+    trainner.Benchmark(model, testDataPath, absl::GetFlag(FLAGS_batch_size),
+                       &submiter, parserConfPath);
+    submiter.SubmitDone();
+  } else {
+    trainner.MainLoop(
+        model, trainDataPath, testDataPath, absl::GetFlag(FLAGS_learning_rate),
+        absl::GetFlag(FLAGS_batch_size), absl::GetFlag(FLAGS_eval_every),
+        &reporter, parserConfPath, 100 /** epoch */,
+        absl::GetFlag(FLAGS_warmup_steps), absl::GetFlag(FLAGS_max_test_num),
+        1 /** update per batchs */,
+        absl::GetFlag(FLAGS_pretrained_model_path) /**pretrained model path*/
+    );
+  }
 
   return 0;
 }

@@ -20,6 +20,7 @@
 
 #include "radish/optimization/lamb.h"
 #include "radish/optimization/radam.h"
+#include "radish/train/benchmark_submiter.h"
 #include "radish/train/data/leveldb_dataset.h"
 #include "radish/train/data/txt_dataset.h"
 #include "radish/train/model_io.h"
@@ -53,6 +54,79 @@ class LlbTrainer {
   typedef typename std::conditional<
       usePlainTxt, torch::data::samplers::SequentialSampler,
       torch::data::samplers::RandomSampler>::type DataSamplerT;
+
+  void Benchmark(Model model, const std::string& datasetPath, int batchSize,
+                 BenchmarkSubmiter* submiter, std::string parserConfPath) {
+    torch::Device device = torch::kCPU;
+    spdlog::info("CUDA DEVICE COUNT: {}", torch::cuda::device_count());
+    if (torch::cuda::is_available()) {
+      if (torch::cuda::cudnn_is_available()) {
+        spdlog::info("CUDA  and cudnn is available! Training on GPU.");
+      } else {
+        spdlog::info(
+            "CUDA is available, but cudnn is not available! Training on GPU.");
+      }
+      device = torch::kCUDA;
+    }
+    torch::NoGradGuard guard;
+    // log目录初始化
+    logdir_init_(model, std::string(), device);
+    model->to(device);
+    Json::Value parserConf;
+    if (!parserConfPath.empty()) {
+      Json::Reader reader;
+      std::ifstream ifs(parserConfPath);
+      CHECK(ifs) << "can't read " << parserConfPath << " ?";
+      CHECK(reader.parse(ifs, parserConf)) << "config file can't be parsed!";
+    }
+    parserConf["parser.preload"]=0;
+    parserConf["eval"]=1;
+    auto trainLoader = torch::data::make_data_loader<DataSamplerT>(
+        std::move(DatasetT(datasetPath, parserConf)),
+        torch::data::DataLoaderOptions()
+            .batch_size(batchSize)
+            .workers(1)
+            .enforce_ordering(true));
+    int nexs = 0;
+    for (auto inputs : *trainLoader) {
+      model->eval();
+      std::vector<std::vector<Tensor>> batchDatas;
+      for (size_t i = 0; i < inputs.size(); i++) {
+        auto& ex = inputs[i];
+        if (ex.features.empty()) {
+          continue;
+        }
+        if (batchDatas.empty()) {
+          batchDatas.resize(ex.features.size());
+        } else {
+          CHECK_EQ(batchDatas.size(), ex.features.size());
+        }
+        for (size_t j = 0; j < ex.features.size(); j++) {
+          batchDatas[j].push_back(ex.features[j]);
+        }
+      }
+      if (batchDatas.empty()) {
+        continue;
+      }
+      std::vector<Tensor> examples;
+      for (size_t j = 0; j < batchDatas.size(); j++) {
+        examples.push_back(torch::stack(batchDatas[j], 0).to(device));
+      }
+      Tensor logits = model->Benchmark(examples);
+      CHECK_EQ(logits.dim(), 2);
+      for (int i = 0; i < logits.size(0); i++) {
+        std::vector<float> row;
+        for (int j = 0; j < logits.size(1); j++) {
+          row.push_back(logits[i][j].item().to<float>());
+        }
+        submiter->SubmitOneRow(row);
+        nexs += 1;
+      }
+    }
+    submiter->SubmitDone();
+    spdlog::info("benchmarked {} exampes", nexs);
+  }
+
   /**
    *
    * 训练主代码

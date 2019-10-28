@@ -80,7 +80,7 @@ std::vector<Tensor> BertClassificationModelImpl::forward(std::vector<Tensor> inp
   CHECK(inputs.size() >= 2);
   // 0 - for seq
   Tensor& src_seq = inputs[0];
-  Tensor mask = src_seq.ne(0).toType(torch::kFloat32).to(src_seq.device());
+  Tensor mask = src_seq.ne(0).toType(torch::kFloat32).to(src_seq.device()).detach();
   // types
   Tensor& types = inputs[1];
   auto rets = bert(src_seq, mask, types);

@@ -17,9 +17,9 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
-#include "external/utfcpp/source/utf8.h"
 #include "radish/utils/logging.h"
 #include "utf8proc.h"
+#include "source/utf8.h"
 
 namespace radish {
 
@@ -143,20 +143,24 @@ std::string BertTokenizer::Id2Word(int id) const {
 }
 
 void BertTokenizer::load_vocab_(std::string path) {
-  std::ifstream inp(path);
-  CHECK(inp) << "open vocal for read failed!" << path;
-  std::string line;
+  FILE* fp = fopen(path.c_str(), "r");
+  CHECK(fp != NULL) << "open file error:" << path;
+  char line[4096] = {0};
   int idx = 0;
-  while (std::getline(inp, line)) {
-    size_t len = line.size();
-    while (len > 0 && line[len - 1] == '\n') {
-      len -= 1;
+  while (fgets(line, sizeof(line) - 1, fp)) {
+    int nn = strlen(line);
+    while (nn && (line[nn - 1] == '\n' || line[nn - 1] == '\r')) {
+      nn -= 1;
     }
-    std::string token(line.c_str(), len);
+    if (nn <= 0) {
+      continue;
+    }
+    std::string token(line, nn);
     tokens_.push_back(token);
     token_2_id_map_[token] = idx;
     idx += 1;
   }
+  fclose(fp);
 }
 
 static bool _is_whitespace(uint16_t c) {
