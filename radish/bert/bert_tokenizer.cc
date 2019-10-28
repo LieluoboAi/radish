@@ -19,6 +19,7 @@
 #include "absl/strings/strip.h"
 #include "external/utfcpp/source/utf8.h"
 #include "radish/utils/logging.h"
+#include "utf8proc.h"
 
 namespace radish {
 
@@ -54,15 +55,24 @@ bool BertTokenizer::Init(std::string vocab_file) {
   }
   return true;
 }
+
 std::vector<int> BertTokenizer::Encode(std::string text) {
   (void)s_bRegistered;  // force the registeration
   std::vector<int> results;
   absl::RemoveExtraAsciiWhitespace(&text);
+  char* nfkcstr = reinterpret_cast<char*>(
+      utf8proc_NFD(reinterpret_cast<const unsigned char*>(text.c_str())));
+  if (nfkcstr == nullptr) {
+    spdlog::info("do NFD error");
+    return {};
+  }
+  text.assign(nfkcstr, strlen(nfkcstr));
+  free(nfkcstr);
   text = absl::AsciiStrToLower(text);
-  // spdlog::info("text now is :{}", text);
   UString unicodes;
   utf8::utf8to16(text.c_str(), text.c_str() + text.size(),
                  std::back_inserter(unicodes));
+  unicodes = _strip_accents(unicodes);
   unicodes = _clean(unicodes);
   unicodes = _basic_tokenize(unicodes);
   std::string newtext;
@@ -222,6 +232,19 @@ UString BertTokenizer::_clean(UString text) {
     } else {
       ret.append(1, c);
     }
+  }
+  return ret;
+}
+
+UString BertTokenizer::_strip_accents(UString text) {
+  size_t len = text.size();
+  UString ret;
+  for (size_t i = 0; i < len; i++) {
+    uint16_t c = text[i];
+    if (utf8proc_category(c) == UTF8PROC_CATEGORY_MN) {
+      continue;
+    }
+    ret.append(1, c);
   }
   return ret;
 }

@@ -45,4 +45,7 @@ TEST_F(BertTokenizerTest, TestEncode) {
   expected = {100, 110, 8101, 108, 137, 190, 111, 116,
               100, 100, 8043, 510, 100, 523, 524};
   EXPECT_EQ(ids, expected);
+  ids = tokenizer_->Encode("òóôõöø");
+  expected = {11383, 8902, 8167, 13364};
+  EXPECT_EQ(ids, expected);
 }
