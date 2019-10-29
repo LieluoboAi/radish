@@ -18,8 +18,8 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
 #include "radish/utils/logging.h"
-#include "utf8proc.h"
 #include "source/utf8.h"
+#include "utf8proc.h"
 
 namespace radish {
 
@@ -166,14 +166,15 @@ static bool _is_whitespace(uint16_t c) {
   if (c == '\t' || c == '\n' || c == '\r' || c == ' ') {
     return true;
   }
-  return std::iswspace(c);
+  return (UTF8PROC_CATEGORY_ZS == utf8proc_category(c));
 }
 
 static bool _is_control(uint16_t c) {
   if (c == '\t' || c == '\n' || c == '\r') {
     return false;
   }
-  return std::iswcntrl(c);
+  utf8proc_category_t cat = utf8proc_category(c);
+  return (cat == UTF8PROC_CATEGORY_CC || cat == UTF8PROC_CATEGORY_CF);
 }
 
 static bool _is_chinese_char(uint16_t cp) {
@@ -193,10 +194,12 @@ static bool _is_punct_char(uint16_t cp) {
   if (cp == ' ') {
     return false;
   }
+  // we can remove this part code  now !!!!
   if (kChinesePunts.find(cp) != kChinesePunts.end()) {
     return true;
   }
-  return std::iswpunct(cp);
+  int cate = static_cast<int>(utf8proc_category(cp));
+  return (cate >= 12 && cate <= 18);
 }
 UString BertTokenizer::_basic_tokenize(UString text) {
   UString ret;
@@ -227,7 +230,8 @@ UString BertTokenizer::_clean(UString text) {
   UString ret;
   for (size_t i = 0; i < len; i++) {
     uint16_t c = text[i];
-    if (c == 0 || c == 0xFFFD || _is_control(c) || utf8proc_category(c) == UTF8PROC_CATEGORY_MN) {
+    if (c == 0 || c == 0xFFFD || _is_control(c) ||
+        utf8proc_category(c) == UTF8PROC_CATEGORY_MN) {
       continue;
     }
     if (_is_whitespace(c)) {
