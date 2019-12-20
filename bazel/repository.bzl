@@ -63,10 +63,10 @@ def radish_repositories():
     _maybe(
         http_archive,
         name = "sentencepiece",
-        sha256 = "4567a038605b7da094089ae1dfe7ef7ed623c7aa76050a74aeaf7fd84b3fe390",
-        strip_prefix = "sentencepiece-998ab31fe1388fd3b729079138d65f89b9a5c62e",
+        sha256 = "588045b3852beea5343a22d3e79789dfb4139d1c5ce431c047aee2acb3301c75",
+        strip_prefix = "sentencepiece-8bbe66cf2fb7ac3c022fc59e39f8405a89a49b22",
         urls = [
-            "https://github.com/lieluoboai/sentencepiece/archive/998ab31fe1388fd3b729079138d65f89b9a5c62e.tar.gz",
+            "https://github.com/lieluoboai/sentencepiece/archive/8bbe66cf2fb7ac3c022fc59e39f8405a89a49b22.tar.gz",
         ],
     )
     _maybe(
@@ -79,25 +79,22 @@ def radish_repositories():
         ],
     )
 
-    _maybe(
-        http_archive,
-        name = "com_google_protobuf_cc",
-        sha256 = "f1748989842b46fa208b2a6e4e2785133cfcc3e4d43c17fecb023733f0f5443f",
-        strip_prefix = "protobuf-3.7.1",
-        urls = [
-            "https://github.com/protocolbuffers/protobuf/archive/v3.7.1.tar.gz",
-        ],
-    )
+    # _maybe(
+    #     http_archive,
+    #     name = "com_google_protobuf_cc",
+    #     sha256 = "f1748989842b46fa208b2a6e4e2785133cfcc3e4d43c17fecb023733f0f5443f",
+    #     strip_prefix = "protobuf-3.7.1",
+    #     urls = [
+    #         "https://github.com/protocolbuffers/protobuf/archive/v3.7.1.tar.gz",
+    #     ],
+    # )
 
     _maybe(
         http_archive,
         name = "com_google_absl",
-        build_file = "@com_lieluobo_radish//third_party:absl.BUILD",
-        sha256 = "7ce0245f27f0446dab92b849492bba85263daacaf9f34ce2fbb2831f43fd04db",
-        strip_prefix = "abseil-cpp-502efe6d7841bff82b1aeef5500491fe9a48c635",
-        urls = [
-            "https://github.com/abseil/abseil-cpp/archive/502efe6d7841bff82b1aeef5500491fe9a48c635.tar.gz",
-        ],
+        urls = ["https://github.com/abseil/abseil-cpp/archive/20190808.tar.gz"],
+        strip_prefix = "abseil-cpp-20190808",
+        sha256 = "8100085dada279bf3ee00cd064d43b5f55e5d913be0dfe2906f06f8f28d5b37e",
     )
 
     _maybe(

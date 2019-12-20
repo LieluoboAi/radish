@@ -12,10 +12,9 @@
 
 #include <algorithm>
 
+#include "sentencepiece/sentencepiece_processor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/strip.h"
-#include "radish/utils/logging.h"
-#include "sentencepiece/sentencepiece_processor.h"
 
 namespace radish {
 

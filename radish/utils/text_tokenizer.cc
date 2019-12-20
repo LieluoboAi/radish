@@ -22,7 +22,8 @@ bool TextTokenizerFactory::Register(
   if (sMethods == nullptr) {
     sMethods = new std::map<std::string, TextTokenizerFactory::TCreateMethod>();
   }
-  if (auto it = sMethods->find(name); it == sMethods->end()) {
+  auto it = sMethods->find(name);
+  if (it == sMethods->end()) {
     sMethods->insert(std::make_pair(name, funcCreate));
     return true;
   }
