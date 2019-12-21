@@ -22,6 +22,7 @@ class BertTokenizer : public TextTokenizer,
                       TextTokenizerRegisteeStub<BertTokenizer> {
  public:
   bool Init(std::string vocab) override;
+  bool InitByFileContent(std::string content);
   std::vector<int> Encode(std::string text) override;
   int Word2Id(std::string word) const override;
   std::string Id2Word(int id) const override;
@@ -33,7 +34,8 @@ class BertTokenizer : public TextTokenizer,
   int TotalSize() const override;
  private:
   void max_seg_(std::string s, std::vector<int>& results);
-  void load_vocab_(std::string path);
+  void load_vocab_(std::string path, std::vector<std::string>& lines);
+  void init_from_lines(const std::vector<std::string>& lines);
   UString _basic_tokenize(UString text);
   UString _clean(UString text);
   std::unordered_map<std::string, int> token_2_id_map_;

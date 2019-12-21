@@ -19,7 +19,7 @@ class BertTokenizerTest : public testing::Test {
   virtual void SetUp() {
     tokenizer_.reset(
         radish::TextTokenizerFactory::Create("radish::BertTokenizer"));
-    EXPECT_TRUE(tokenizer_->Init("/e/data/bert_base_chinese/vocab.txt"));
+    EXPECT_TRUE(tokenizer_->Init("/e/data/chinese_roberta_wwm_ext_L-12_H-768_A-12/vocab.txt"));
   }
   virtual void TearDown() {}
   std::unique_ptr<radish::TextTokenizer> tokenizer_;
