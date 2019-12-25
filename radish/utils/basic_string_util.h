@@ -2,7 +2,7 @@
  * @ Author: yvon
  * @ Create Time: 2019-12-25 17:27:21
  * @ Modified by: yvon
- * @ Modified time: 2019-12-25 17:30:04
+ * @ Modified time: 2019-12-25 17:54:22
  * @ Description:
  */
 #ifndef RADISH_UTILS_BASIC_STRING_UTIL_H_
@@ -18,6 +18,7 @@
 #include <string>
 #include <time.h>
 #include <vector>
+#include <algorithm>
 #define eq1(x, y) (tolower(x) == tolower(y))
 #define eq2(x, y) ((x) == (y))
 #define my_eq(t, x, y) ((t) ? eq2(x, y) : eq1(x, y))
