@@ -14,9 +14,7 @@
 #include <cwctype>
 #include <fstream>
 
-#include "absl/strings/ascii.h"
-#include "absl/strings/str_split.h"
-#include "absl/strings/strip.h"
+#include "radish/utils/basic_string_util.h"
 #include "radish/utils/logging.h"
 #include "source/utf8.h"
 #include "utf8proc.h"
@@ -43,7 +41,9 @@ bool BertTokenizer::Init(std::string vocab_file) {
 }
 
 bool BertTokenizer::InitByFileContent(std::string content) {
-  std::vector<std::string> lines = absl::StrSplit(content, '\n');
+
+  std::vector<std::string> lines;
+  BasicStringUtil::SplitString(content.c_str(), content.size(),'\n',&lines);
   init_from_lines(lines);
   if (token_2_id_map_.find(kPadToken) == token_2_id_map_.end()) {
     return false;
@@ -70,7 +70,7 @@ bool BertTokenizer::InitByFileContent(std::string content) {
 std::vector<int> BertTokenizer::Encode(std::string text) {
   (void)s_bRegistered;  // force the registeration
   std::vector<int> results;
-  absl::RemoveExtraAsciiWhitespace(&text);
+  text =BasicStringUtil::StripStringASCIIWhole(text);
   char* nfkcstr = reinterpret_cast<char*>(
       utf8proc_NFD(reinterpret_cast<const unsigned char*>(text.c_str())));
   if (nfkcstr == nullptr) {
@@ -79,7 +79,7 @@ std::vector<int> BertTokenizer::Encode(std::string text) {
   }
   text.assign(nfkcstr, strlen(nfkcstr));
   free(nfkcstr);
-  text = absl::AsciiStrToLower(text);
+  BasicStringUtil::ToLower(text);
   UString unicodes;
   utf8::utf8to16(text.c_str(), text.c_str() + text.size(),
                  std::back_inserter(unicodes));
@@ -90,7 +90,8 @@ std::vector<int> BertTokenizer::Encode(std::string text) {
       reinterpret_cast<const uint16_t*>(unicodes.c_str()),
       reinterpret_cast<const uint16_t*>(unicodes.c_str() + unicodes.size()),
       std::back_inserter(newtext));
-  std::vector<std::string> tokens = absl::StrSplit(newtext, ' ');
+  std::vector<std::string> tokens;
+  BasicStringUtil::SplitString(newtext.c_str(), newtext.size(), ' ', &tokens);
   for (auto s : tokens) {
     if (s.size() > kMaxCharsPerWords) {
       results.push_back(token_2_id_map_.at(kUnkToken));

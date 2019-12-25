@@ -54,3 +54,10 @@ cc_library(
     ],
     alwayslink = True,
 )
+
+cc_library(
+    name="basic_string_util",
+    srcs=[
+        "basic_string_util.h"
+    ]
+)

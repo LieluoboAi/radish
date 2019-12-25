@@ -16,6 +16,7 @@
 
 #include "radish/utils/text_tokenizer.h"
 
+
 namespace radish {
 using UString = std::basic_string<uint16_t>;
 class BertTokenizer : public TextTokenizer,

@@ -109,7 +109,7 @@ cc_library(
     deps = [
         "//radish/utils:logging",
         "//radish/utils:text_tokenizer",
-        "//external:absl_string",
+        "//radish/utils:basic_string_util",
         "@utfcpp",
         "@utf8proc",
     ],
