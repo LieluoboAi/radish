@@ -120,3 +120,9 @@ repositories()
 load("@com_github_lieluoboai_crc32c//:bazel/repositories.bzl", "repositories")
 
 repositories()
+
+
+bind(
+    name="absl_string",
+    actual="@com_google_absl//absl/strings",
+)
